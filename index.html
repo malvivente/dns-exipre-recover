@@ -378,7 +378,7 @@ let debounceTimer = null;
 
 function buildReleasePayload() {
 
-  const cell = tonCore.beginCell()
+  const cell = TonCore.beginCell()
     .storeUint(0x4ed14b65, 32)
     .storeUint(0, 64)
     .endCell();
