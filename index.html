@@ -6,8 +6,8 @@
 
 <title>TON DNS Releaser</title>
 
+<!-- Unica libreria necessaria: TON Connect UI ufficiale -->
 <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@2.4.4/dist/tonconnect-ui.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tonweb/0.0.66/tonweb.min.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 
@@ -24,220 +24,45 @@
     --text-dim: #7a9bbf;
   }
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    min-height: 100vh;
-  }
-
-  .app {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-
-  header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 30px;
-  }
-
-  .logo-icon {
-    width: 44px;
-    height: 44px;
-    background: var(--ton);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    font-weight: 800;
-    color: #fff;
-  }
-
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; min-height: 100vh; }
+  .app { max-width: 480px; margin: 0 auto; padding: 20px; }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
+  .logo-icon { width: 44px; height: 44px; background: var(--ton); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; }
+  
   .connect-btn {
     background: linear-gradient(135deg, #0098ea, #006fa8);
-    border: none;
-    border-radius: 12px;
-    padding: 14px 24px;
-    color: #fff;
-    font-weight: 700;
-    cursor: pointer;
-    width: 100%;
-    font-size: 17px;
-    transition: opacity 0.2s;
+    border: none; border-radius: 12px; padding: 14px 24px; color: #fff;
+    font-weight: 700; cursor: pointer; width: 100%; font-size: 17px; transition: opacity 0.2s;
   }
+  .connect-btn:hover { opacity: 0.9; }
+  .connect-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .connect-btn:hover {
-    opacity: 0.9;
-  }
+  .wallet-pill { display: none; align-items: center; gap: 10px; background: #0d1829; border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; cursor: pointer; }
+  .wallet-pill.visible { display: flex; }
+  .main-form { display: none; }
+  .main-form.visible { display: block; }
 
-  .connect-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .form-group label { color: var(--text-dim); font-size: 14px; font-weight: 500; }
+  .form-group input { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: var(--text); font-family: inherit; font-size: 16px; outline: none; transition: border-color 0.2s; }
+  .form-group input:focus { border-color: var(--ton); }
 
-  .wallet-pill {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    background: #0d1829;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 16px;
-    cursor: pointer;
-  }
-
-  .wallet-pill.visible {
-    display: flex;
-  }
-
-  .main-form {
-    display: none;
-  }
-
-  .main-form.visible {
-    display: block;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
-
-  .form-group label {
-    color: var(--text-dim);
-    font-size: 14px;
-    font-weight: 500;
-  }
-
-  .form-group input {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 16px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .form-group input:focus {
-    border-color: var(--ton);
-  }
-
-  .dns-status {
-    font-size: 12px;
-    margin-top: 4px;
-    word-break: break-all;
-    min-height: 18px;
-  }
-
+  .dns-status { font-size: 12px; margin-top: 4px; word-break: break-all; min-height: 18px; }
   .dns-status.loading { color: var(--text-dim); }
   .dns-status.success { color: var(--green); }
   .dns-status.error { color: var(--red); }
 
-  .mode-selector {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-
-  .mode-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 10px;
-    color: var(--text-dim);
-    font-family: inherit;
-    font-size: 12px;
-    cursor: pointer;
-    text-align: center;
-    line-height: 1.4;
-    transition: all .15s;
-  }
-
-  .mode-btn:hover { border-color: var(--ton); }
-  .mode-btn.active {
-    background: rgba(0, 152, 234, .1);
-    border-color: var(--ton);
-    color: var(--text);
-  }
-
-  .info-box {
-    background: rgba(255, 211, 42, .05);
-    border: 1px solid rgba(255, 211, 42, .2);
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 16px;
-    font-size: 11px;
-    color: var(--yellow);
-    line-height: 1.6;
-  }
-
-  .info-box.blue {
-    background: rgba(0, 152, 234, .05);
-    border-color: rgba(0, 152, 234, .2);
-    color: var(--text-dim);
-  }
-
-  .debug-box {
-    background: #0d1829;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 16px;
-    font-size: 11px;
-    color: var(--text-dim);
-    line-height: 1.8;
-    display: none;
-  }
-
+  .info-box { background: rgba(255, 211, 42, .05); border: 1px solid rgba(255, 211, 42, .2); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 11px; color: var(--yellow); line-height: 1.6; }
+  .debug-box { background: #0d1829; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 11px; color: var(--text-dim); line-height: 1.8; display: none; }
   .debug-box.visible { display: block; }
   .debug-box .key { color: var(--ton); }
 
-  .toast {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-60px);
-    background: #0d1829;
-    border: 1px solid var(--green);
-    padding: 14px 20px;
-    border-radius: 12px;
-    z-index: 9999;
-    color: var(--green);
-    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
-    white-space: nowrap;
-  }
-
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-60px); background: #0d1829; border: 1px solid var(--green); padding: 14px 20px; border-radius: 12px; z-index: 9999; color: var(--green); transition: transform .3s cubic-bezier(.34, 1.56, .64, 1); white-space: nowrap; }
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.error { border-color: var(--red); color: var(--red); }
 
-  .spinner {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border: 2px solid rgba(255, 255, 255, .3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-    vertical-align: middle;
-    margin-right: 6px;
-  }
-
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255, 255, 255, .3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
@@ -261,31 +86,24 @@
   </div>
 
   <div class="main-form" id="mainForm">
-    <div style="font-size: 10px; letter-spacing: 2px; color: #3a5470; text-transform: uppercase; margin-bottom: 8px">Modalità</div>
-    <div class="mode-selector">
-      <button class="mode-btn active" id="modeRelease" onclick="setMode('release')">🔓 DNS Release</button>
-      <button class="mode-btn" id="modeTransfer" onclick="setMode('transfer')">💸 Transfer</button>
-    </div>
-
-    <div class="info-box" id="modeInfo">
-      ⚠️ <strong>Release:</strong> Chiama <code>dns_balance_release</code> direttamente sul contratto del dominio scaduto.
+    <div class="info-box">
+      ⚠️ <strong>DNS Release:</strong> Invia l'operazione strutturata <code>0x4ed14b65</code> direttamente all'indirizzo del contratto del dominio scaduto per forzare il rilascio.
     </div>
 
     <div class="form-group">
-      <label for="domainInput">Dominio TON</label>
+      <label for="domainInput">Dominio TON Scaduto</label>
       <input type="text" id="domainInput" placeholder="esempio.ton" autocomplete="off">
       <div id="dnsStatus" class="dns-status"></div>
     </div>
 
     <div class="debug-box" id="debugBox">
-      <div><span class="key">NFT Item:</span> <span id="dbAddr">—</span></div>
-      <div><span class="key">Destinazione:</span> <span id="dbDest">—</span></div>
-      <div><span class="key">Operazione:</span> <span id="dbType">—</span></div>
+      <div><span class="key">Contratto Dominio:</span> <span id="dbAddr">—</span></div>
+      <div><span class="key">Op-Code:</span> <span>0x4ed14b65 (dns_balance_release)</span></div>
     </div>
 
     <div class="form-group">
-      <label for="amountInput">Importo (TON - Minimo Consigliato Asta)</label>
-      <input type="number" id="amountInput" placeholder="0.5" step="0.01" min="0.5" value="0.5">
+      <label for="amountInput">Importo (TON - Minimo per offerta iniziale asta)</label>
+      <input type="number" id="amountInput" placeholder="0.5" step="0.1" min="0.5" value="0.5">
     </div>
 
     <button id="releaseBtn" class="connect-btn" style="margin-top: 10px">Trigger Release →</button>
@@ -299,140 +117,139 @@ const MANIFEST_URL = "https://dns-exipre-recover.vercel.app/tonconnect-manifest.
 
 let tonConnectUI = null;
 let resolvedAddress = null;
-let currentMode = 'release';
 let debounceTimer = null;
 
 // ─────────────────────────────────────────────────────────────
-// COSTRUZIONE PAYLOAD CON TONWEB (CORRETTO E STABILE)
+// PAYLOAD GENERATO IN PURO JAVASCRIPT NATIVO (Zero Librerie!)
 // ─────────────────────────────────────────────────────────────
 function buildReleasePayload() {
-  // Crea una nuova cella utilizzando TonWeb
-  const cell = new TonWeb.boc.Cell();
+  /**
+   * Genera la struttura BOC esatta per un messaggio interno TON con:
+   * - op: 0x4ed14b65 (32 bit)
+   * - query_id: 0 (64 bit)
+   */
+  const bocBytes = new Uint8Array([
+    0xb5, 0xee, 0x9c, 0x72, 0x01, 0x01, 0x01, 0x01, 
+    0x00, 0x10, 0x00, 0x00, 0x02, 0x4e, 0xd1, 0x4b, 
+    0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00
+  ]);
+
+  // Conversione sicura in stringa binaria per btoa (Base64)
+  let binary = "";
+  for (let i = 0; i < bocBytes.length; i++) {
+    binary += String.fromCharCode(bocBytes[i]);
+  }
+  return btoa(binary);
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONVERSIONE INDIRIZZI IN FORMATO FRIENDLY (NATIVA)
+// ─────────────────────────────────────────────────────────────
+function crc16(data) {
+  let crc = 0;
+  for (const byte of data) {
+    crc ^= byte << 8;
+    for (let i = 0; i < 8; i++) {
+      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+    }
+  }
+  return crc;
+}
+
+function convertRawToFriendly(rawAddress) {
+  if (!rawAddress.includes(':')) return rawAddress;
   
-  // Scrive la firma di operazione (op) per dns_balance_release: 0x4ed14b65 (32 bit)
-  cell.bits.writeUint(0x4ed14b65, 32);
-  // Scrive il query_id: 0 (64 bit)
-  cell.bits.writeUint(0, 64);
-
-  // Converte la cella in BOC in formato Base64 standard richiesto da TON Connect
-  return TonWeb.utils.bytesToBase64(cell.toBoc());
-}
-
-// ─────────────────────────────────────────────────────────────
-// UTILS PER GLI INDIRIZZI
-// ─────────────────────────────────────────────────────────────
-function toNonBounceable(friendly) {
-  try {
-    const address = new TonWeb.utils.Address(friendly);
-    return address.toString(true, true, false); // IsUserFriendly=true, UrlSafe=true, Bounceable=false
-  } catch(e) {
-    return friendly;
+  const [wcStr, hexHash] = rawAddress.split(':');
+  const wc = parseInt(wcStr);
+  const hashBytes = new Uint8Array(hexHash.match(/.{2}/g).map(h => parseInt(h, 16)));
+  
+  const buffer = new Uint8Array(36);
+  buffer[0] = 0x11; // Bounceable friendly format
+  buffer[1] = wc & 0xff;
+  buffer.set(hashBytes, 2);
+  
+  const crc = crc16(buffer.slice(0, 34));
+  buffer[34] = (crc >> 8) & 0xff;
+  buffer[35] = crc & 0xff;
+  
+  let binary = "";
+  for (let i = 0; i < buffer.length; i++) {
+    binary += String.fromCharCode(buffer[i]);
   }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_');
 }
 
 // ─────────────────────────────────────────────────────────────
-// GESTIONE MODALITÀ
-// ─────────────────────────────────────────────────────────────
-function setMode(mode) {
-  currentMode = mode;
-  document.getElementById("modeRelease").classList.toggle("active", mode === 'release');
-  document.getElementById("modeTransfer").classList.toggle("active", mode === 'transfer');
-
-  const info = document.getElementById("modeInfo");
-  if (mode === 'release') {
-    info.className = "info-box";
-    info.innerHTML = '⚠️ <strong>DNS Release:</strong> Invia al contratto del dominio con op <code>0x4ed14b65</code>';
-  } else {
-    info.className = "info-box blue";
-    info.innerHTML = 'ℹ️ <strong>Transfer:</strong> Invio semplice TON all’indirizzo del dominio';
-  }
-  updateDebugBox();
-}
-
-// ─────────────────────────────────────────────────────────────
-// RISOLUZIONE DOMINIO TON VIA API
+// RISOLUZIONE DOMINIO VIA API
 // ─────────────────────────────────────────────────────────────
 async function resolveDomain(domain) {
   const statusEl = document.getElementById("dnsStatus");
   statusEl.className = "dns-status loading";
-  statusEl.textContent = "⏳ Risoluzione...";
+  statusEl.textContent = "⏳ Risoluzione contratto...";
   resolvedAddress = null;
   document.getElementById("debugBox").classList.remove("visible");
 
   let full = domain.toLowerCase().trim();
-  if (!full.endsWith('.ton')) {
-    full += '.ton';
-  }
+  if (!full.endsWith('.ton')) full += '.ton';
 
   try {
     const res = await fetch(`https://tonapi.io/v2/dns/${encodeURIComponent(full)}`);
-    if (res.status === 404) throw new Error("Dominio non trovato");
-    if (!res.ok) throw new Error("Errore API");
+    if (res.status === 404) throw new Error("Dominio non registrato/trovato");
+    if (!res.ok) throw new Error("Errore di rete API");
 
     const data = await res.json();
     const raw = data?.item?.address || data?.address;
-    if (!raw) throw new Error("Nessun indirizzo associato");
+    if (!raw) throw new Error("Impossibile trovare l'indirizzo del contratto");
 
-    // Converte l'indirizzo in formato friendly leggibile usando TonWeb
-    const addrObj = new TonWeb.utils.Address(raw);
-    resolvedAddress = addrObj.toString(true, true, true);
+    resolvedAddress = convertRawToFriendly(raw);
 
     statusEl.className = "dns-status success";
-    statusEl.textContent = `✓ ${resolvedAddress.slice(0, 10)}…${resolvedAddress.slice(-8)}`;
-    updateDebugBox();
+    statusEl.textContent = `✓ Contratto trovato: ${resolvedAddress.slice(0, 10)}…${resolvedAddress.slice(-8)}`;
+    
+    document.getElementById("dbAddr").textContent = resolvedAddress;
+    document.getElementById("debugBox").classList.add("visible");
   } catch (e) {
     statusEl.className = "dns-status error";
     statusEl.textContent = `✗ ${e.message}`;
   }
 }
 
-function updateDebugBox() {
-  if (!resolvedAddress) return;
-
-  const dest = currentMode === 'release' ? resolvedAddress : toNonBounceable(resolvedAddress);
-  const type = currentMode === 'release' ? "dns_balance_release (0x4ed14b65)" : "Simple Transfer";
-
-  document.getElementById("dbAddr").textContent = resolvedAddress.slice(0, 8) + "…" + resolvedAddress.slice(-6);
-  document.getElementById("dbDest").textContent = dest.slice(0, 8) + "…" + dest.slice(-6);
-  document.getElementById("dbType").textContent = type;
-  document.getElementById("debugBox").classList.add("visible");
-}
-
 // ─────────────────────────────────────────────────────────────
-// INVIO TRANSAZIONE AL WALLET COLLEGATO
+// ESECUZIONE TRANSAZIONE
 // ─────────────────────────────────────────────────────────────
 async function handleRelease() {
   const amountStr = document.getElementById("amountInput").value.trim();
 
-  if (!resolvedAddress) return showToast("Risolvi prima il dominio", true);
-  if (!amountStr || parseFloat(amountStr) < 0.5) return showToast("Minimo 0.5 TON", true);
-  if (!tonConnectUI?.wallet) return showToast("Connetti il wallet", true);
+  if (!resolvedAddress) return showToast("Inserisci e risolvi un dominio valido", true);
+  if (!amountStr || parseFloat(amountStr) < 0.5) return showToast("Il minimo richiesto è 0.5 TON", true);
+  if (!tonConnectUI?.wallet) return showToast("Connetti prima il tuo Wallet", true);
 
   const btn = document.getElementById("releaseBtn");
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Invio...';
+  btn.innerHTML = '<span class="spinner"></span> Invio richiesta in corso...';
 
   try {
-    // Converte il valore in NanoTON (1 TON = 1e9 NanoTON)
-    const nano = TonWeb.utils.toNano(amountStr).toString();
+    // Calcolo dei NanoTON (valore * 10^9) in formato stringa
+    const nano = BigInt(Math.round(parseFloat(amountStr) * 1e9)).toString();
 
     const tx = {
       validUntil: Math.floor(Date.now() / 1000) + 300,
       messages: [{
-        address: currentMode === 'release' ? resolvedAddress : toNonBounceable(resolvedAddress),
+        address: resolvedAddress, // Destinatario: il contratto stesso del dominio
         amount: nano,
-        payload: currentMode === 'release' ? buildReleasePayload() : undefined
+        payload: buildReleasePayload() // Payload binario statico nativo
       }]
     };
 
     await tonConnectUI.sendTransaction(tx);
-    showToast("✅ Transazione inviata con successo!");
+    showToast("✅ Transazione inviata! Se il dominio è scaduto da > 1 anno, l'asta è aperta.");
     document.getElementById("domainInput").value = "";
     clearDnsStatus();
   } catch (err) {
     console.error(err);
     const msg = String(err.message || err);
-    showToast(/reject|cancel|declined/i.test(msg) ? "Annullato dall'utente" : "Errore: " + msg.slice(0, 80), true);
+    showToast(/reject|cancel|declined/i.test(msg) ? "Transazione rifiutata dal wallet" : "Errore: " + msg.slice(0, 80), true);
   } finally {
     btn.disabled = false;
     btn.textContent = "Trigger Release →";
@@ -476,8 +293,7 @@ async function init() {
 
     if (connected) {
       const rawAddr = w.account.address;
-      const addrObj = new TonWeb.utils.Address(rawAddr);
-      const friendly = addrObj.toString(true, true, true);
+      const friendly = convertRawToFriendly(rawAddr);
       document.getElementById("walletAddr").textContent = friendly.slice(0, 6) + "…" + friendly.slice(-4);
     }
   });
