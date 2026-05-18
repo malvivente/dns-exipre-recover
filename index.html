@@ -5,35 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>TON DNS Releaser</title>
 
+<!-- Inclusione corretta di TonConnect UI -->
 <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@2.4.4/dist/tonconnect-ui.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
 
 <style>
   :root {
-    --bg:#060b14; --surface:#0d1829; --surface2:#111f35;
-    --border:#1a2e4a; --ton:#0098ea; --ton-glow:rgba(0,152,234,0.25);
-    --ton-dim:#006fa8; --green:#00d68f; --red:#ff4757; --yellow:#ffd32a;
-    --text:#e8f4ff; --text-dim:#7a9bbf; --text-muted:#3a5470;
-    --mono:'JetBrains Mono',monospace; --display:'Syne',sans-serif;
+    --bg:#060b14; --surface:#0d1829; --border:#1a2e4a; --ton:#0098ea;
+    --green:#00d68f; --red:#ff4757; --text:#e8f4ff; --text-dim:#7a9bbf;
   }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden;position:relative}
-  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,152,234,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,152,234,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-  .app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:20px 16px 40px}
-  header{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
-  .logo-icon{width:40px;height:40px;background:var(--ton);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:18px;color:#fff;box-shadow:0 0 20px var(--ton-glow)}
-  .header-text h1{font-family:var(--display);font-size:18px;font-weight:800;letter-spacing:-.3px}
-  .wallet-area{margin-left:auto}
-  .tc-connect-btn{background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:10px;padding:10px 18px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 0 15px var(--ton-glow)}
-  .wallet-pill{display:none;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh}
+  .app{max-width:480px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:30px}
+  .logo-icon{width:44px;height:44px;background:var(--ton);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff}
+  .connect-btn{background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:12px;padding:14px 24px;color:#fff;font-weight:700;cursor:pointer;width:100%;font-size:17px}
+  .wallet-pill{display:none;align-items:center;gap:10px;background:#0d1829;border:1px solid var(--border);border-radius:12px;padding:10px 16px;cursor:pointer}
   .wallet-pill.visible{display:flex}
-  .wallet-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:ping 2s infinite}
-  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(0,214,143,.5)}70%{box-shadow:0 0 0 8px rgba(0,214,143,0)}100%{box-shadow:0 0 0 0 rgba(0,214,143,0)}}
   .main-form{display:none}
   .main-form.visible{display:block}
-  .connect-gate.visible{display:block}
-  .release-btn{width:100%;padding:18px;background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:14px;color:#fff;font-size:17px;font-weight:700;cursor:pointer;margin-top:10px}
-  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--green);padding:14px 20px;border-radius:12px;z-index:9999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,214,143,.3);display:none}
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#0d1829;border:1px solid var(--green);padding:14px 20px;border-radius:12px;z-index:9999;white-space:nowrap;display:none}
   .toast.show{display:block}
   .toast.error{border-color:var(--red);color:var(--red)}
 </style>
@@ -42,96 +33,89 @@
 <div class="app">
   <header>
     <div class="logo-icon">⬡</div>
-    <div class="header-text">
-      <h1>TON DNS Releaser</h1>
-      <p>dns_balance_release</p>
-    </div>
-    <div class="wallet-area">
-      <button class="tc-connect-btn" id="connectBtn">Connect Wallet</button>
+    <h1>TON DNS Releaser</h1>
+    <div style="margin-left:auto">
+      <button id="connectBtn" class="connect-btn">Connect</button>
       <div class="wallet-pill" id="walletPill" onclick="disconnectWallet()">
-        <div class="wallet-dot"></div>
         <span id="walletAddr">...</span>
       </div>
     </div>
   </header>
 
-  <div class="connect-gate" id="connectGate">
-    <h2>Collega il tuo wallet</h2>
-    <p>Usa Tonkeeper, Tonhub o altra wallet TON per continuare.</p>
-    <button class="release-btn" id="bigConnectBtn">Connect Wallet →</button>
+  <div id="connectGate">
+    <p style="text-align:center;color:var(--text-dim);margin:30px 0">Collega il wallet per continuare</p>
+    <button id="bigConnectBtn" class="connect-btn">Connect Wallet →</button>
   </div>
 
   <div class="main-form" id="mainForm">
-    <!-- Il tuo form qui (domain, amount, ecc.) -->
-    <button class="release-btn" id="releaseBtn">Trigger Release →</button>
+    <!-- Qui il tuo form completo -->
+    <button id="releaseBtn" class="connect-btn" style="margin-top:20px">Trigger Release →</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ==================== CONFIG ====================
-const DNS_ROOT = "EQC3dNlesgVD8YbAazcauaZz-lz0-8beV9oJFnna0GvYcSRE";
+// Usando un percorso relativo, TonConnect prenderà automaticamente il dominio corrente.
+// Se sei su Vercel userà il dominio di Vercel, se sei in locale userà localhost.
+const manifestUrl = window.location.origin + "/tonconnect-manifest.json"; 
 
 let tonConnectUI = null;
 
-// Manifest (obbligatorio)
-const manifest = {
-  url: window.location.href.split("?")[0].split("#")[0],
-  name: "TON DNS Releaser",
-  iconUrl: "https://images.seeklogo.com/logo-png/44/1/toncoin-ton-logo-png_seeklogo-440335.png"
-};
-
-// ==================== INIT ====================
 async function init() {
   try {
+    // Inizializzazione corretta per la versione 2.x globale
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: `data:application/json,${encodeURIComponent(JSON.stringify(manifest))}`,
-      // buttonRootId non serve più
+      manifestUrl: manifestUrl
     });
 
-    tonConnectUI.onStatusChange((wallet) => {
+    // Gestione dei click sui bottoni di connessione
+    document.getElementById("connectBtn").onclick = () => tonConnectUI.openModal();
+    document.getElementById("bigConnectBtn").onclick = () => tonConnectUI.openModal();
+
+    // Monitoraggio dello stato del wallet
+    tonConnectUI.onStatusChange(wallet => {
       if (wallet) {
         const addr = wallet.account.address;
-        const short = addr.length > 10 ? addr.slice(0,6) + "..." + addr.slice(-4) : addr;
+        // TonConnect restituisce l'indirizzo in formato Raw, lo accorciamo per la UI
+        const short = addr.slice(0,6) + "..." + addr.slice(-4);
+        
         document.getElementById("walletAddr").textContent = short;
         document.getElementById("walletPill").classList.add("visible");
         document.getElementById("connectBtn").style.display = "none";
-        document.getElementById("connectGate").classList.remove("visible");
+        document.getElementById("connectGate").style.display = "none";
         document.getElementById("mainForm").classList.add("visible");
-        showToast("Wallet connesso con successo!", false);
+        showToast("Wallet connesso!", false);
       } else {
         document.getElementById("walletPill").classList.remove("visible");
         document.getElementById("connectBtn").style.display = "block";
-        document.getElementById("connectGate").classList.add("visible");
+        document.getElementById("connectGate").style.display = "block";
         document.getElementById("mainForm").classList.remove("visible");
       }
     });
 
-    // Pulsanti connect
-    document.getElementById("connectBtn").onclick = () => tonConnectUI.openModal();
-    document.getElementById("bigConnectBtn").onclick = () => tonConnectUI.openModal();
-    document.getElementById("releaseBtn").onclick = () => alert("Aggiungi qui la logica di openModal()");
-
   } catch (e) {
-    console.error(e);
-    showToast("Errore di inizializzazione TonConnect", true);
+    console.error("Errore durante l'inizializzazione:", e);
+    showToast("Errore TonConnect - controlla la console", true);
   }
 }
 
 function showToast(msg, isError = false) {
-  const toast = document.getElementById("toast");
-  toast.textContent = msg;
-  toast.className = isError ? "toast error show" : "toast show";
-  setTimeout(() => toast.classList.remove("show"), 4000);
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = isError ? "toast error show" : "toast show";
+  setTimeout(() => t.classList.remove("show"), 4500);
 }
 
 window.disconnectWallet = async () => {
-  if (tonConnectUI) await tonConnectUI.disconnect();
+  if (tonConnectUI) {
+    await tonConnectUI.disconnect();
+    showToast("Wallet disconnesso", false);
+  }
 };
 
-// Avvia tutto
-window.onload = init;
+// Avvia l'inizializzazione al caricamento della pagina
+window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
