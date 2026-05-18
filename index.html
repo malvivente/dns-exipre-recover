@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>TON DNS Releaser</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@2.0.9/dist/tonconnect-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@2.4.4/dist/tonconnect-ui.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
 
 <style>
@@ -19,115 +19,23 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden;position:relative}
   body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,152,234,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,152,234,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-  body::after{content:'';position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(0,152,234,.12) 0%,transparent 70%);pointer-events:none;z-index:0}
   .app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:20px 16px 40px}
   header{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
-  .logo-icon{width:40px;height:40px;background:var(--ton);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:18px;color:#fff;box-shadow:0 0 20px var(--ton-glow);flex-shrink:0}
+  .logo-icon{width:40px;height:40px;background:var(--ton);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:18px;color:#fff;box-shadow:0 0 20px var(--ton-glow)}
   .header-text h1{font-family:var(--display);font-size:18px;font-weight:800;letter-spacing:-.3px}
-  .header-text p{font-size:10px;color:var(--text-dim);margin-top:2px;letter-spacing:.5px}
-  .wallet-area{margin-left:auto;flex-shrink:0;display:flex;align-items:center}
-  .tc-connect-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:10px;padding:8px 14px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;box-shadow:0 0 14px var(--ton-glow);white-space:nowrap;transition:all .2s}
-  .tc-connect-btn:hover{box-shadow:0 0 22px rgba(0,152,234,.45)}
-  .wallet-pill{display:none;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 12px;cursor:pointer;transition:border-color .2s;font-size:11px}
-  .wallet-pill:hover{border-color:var(--red)}
+  .wallet-area{margin-left:auto}
+  .tc-connect-btn{background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:10px;padding:10px 18px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 0 15px var(--ton-glow)}
+  .wallet-pill{display:none;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer}
   .wallet-pill.visible{display:flex}
-  .wallet-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pg 2s infinite;flex-shrink:0}
-  @keyframes pg{0%,100%{box-shadow:0 0 0 0 rgba(0,214,143,.4)}50%{box-shadow:0 0 0 5px rgba(0,214,143,0)}}
-  .wallet-addr{color:var(--ton);font-weight:500;letter-spacing:.5px}
-  .wallet-disconnect{color:var(--text-muted);font-size:9px;margin-left:2px}
-  .connect-gate{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 20px;text-align:center;margin-bottom:20px;display:none}
-  .connect-gate.visible{display:block}
-  .connect-gate-icon{font-size:40px;margin-bottom:12px}
-  .connect-gate h2{font-family:var(--display);font-size:18px;font-weight:800;margin-bottom:8px}
-  .connect-gate p{font-size:12px;color:var(--text-dim);line-height:1.6;margin-bottom:20px}
-  .connect-gate-bigbtn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:12px;padding:14px 28px;color:#fff;font-family:var(--display);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px var(--ton-glow);transition:all .2s}
-  .connect-gate-bigbtn:hover{box-shadow:0 6px 28px rgba(0,152,234,.45);transform:translateY(-1px)}
+  .wallet-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:ping 2s infinite}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(0,214,143,.5)}70%{box-shadow:0 0 0 8px rgba(0,214,143,0)}100%{box-shadow:0 0 0 0 rgba(0,214,143,0)}}
   .main-form{display:none}
   .main-form.visible{display:block}
-  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
-  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
-  .stat-value{font-family:var(--display);font-size:20px;font-weight:800;color:var(--text);display:block}
-  .stat-unit{font-size:9px;color:var(--ton);font-weight:500}
-  .stat-desc{font-size:9px;color:var(--text-muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
-  .section-label{font-size:10px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
-  .input-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;transition:border-color .2s,box-shadow .2s}
-  .input-card:focus-within{border-color:var(--ton-dim);box-shadow:0 0 0 3px var(--ton-glow)}
-  .domain-row{display:flex;align-items:center;gap:10px}
-  .ton-suffix{font-size:14px;color:var(--ton);font-weight:500;white-space:nowrap;padding:10px 12px;background:rgba(0,152,234,.08);border-radius:8px;border:1px solid rgba(0,152,234,.2)}
-  input[type="text"]{flex:1;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:16px;color:var(--text);caret-color:var(--ton);width:100%}
-  input::placeholder{color:var(--text-muted);font-size:14px}
-  .input-hint{margin-top:10px;font-size:10px;color:var(--text-muted)}
-  .amount-section{margin-bottom:16px}
-  .amount-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-  .preset-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 6px;color:var(--text-dim);font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .15s;text-align:center;line-height:1.3}
-  .preset-btn:hover{border-color:var(--ton-dim);color:var(--text)}
-  .preset-btn.active{background:rgba(0,152,234,.12);border-color:var(--ton);color:var(--ton);box-shadow:0 0 12px var(--ton-glow)}
-  .preset-btn .amount{font-weight:700;font-size:14px;display:block}
-  .preset-btn .label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;display:block}
-  .preset-btn.active .label{color:var(--ton-dim)}
-  .custom-amount-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;transition:border-color .2s}
-  .custom-amount-wrapper:focus-within{border-color:var(--ton-dim)}
-  .custom-amount-wrapper span{font-size:11px;color:var(--text-muted);white-space:nowrap}
-  .custom-amount-wrapper input{font-size:14px;text-align:right;background:transparent;border:none;outline:none;font-family:var(--mono);color:var(--text);width:100%}
-  .info-box{background:rgba(0,152,234,.06);border:1px solid rgba(0,152,234,.18);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
-  .info-icon{font-size:16px;flex-shrink:0;margin-top:1px}
-  .info-text{font-size:11px;color:var(--text-dim);line-height:1.6}
-  .info-text strong{color:var(--ton);font-weight:500}
-  .manifest-status{font-size:10px;padding:6px 12px;border-radius:8px;margin-bottom:14px;display:none}
-  .manifest-status.ok{background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.2);color:var(--green);display:block}
-  .manifest-status.err{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);color:var(--red);display:block}
-  .release-btn{width:100%;padding:18px;background:linear-gradient(135deg,#0098ea 0%,#006fa8 100%);border:none;border-radius:14px;color:#fff;font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:.3px;cursor:pointer;position:relative;overflow:hidden;transition:all .2s;box-shadow:0 4px 24px rgba(0,152,234,.35)}
-  .release-btn::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);transition:left .5s}
-  .release-btn:hover::before{left:150%}
-  .release-btn:active{transform:scale(.98)}
-  .release-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-  .btn-inner{display:flex;align-items:center;justify-content:center;gap:8px}
-  .btn-arrow{font-size:18px;transition:transform .2s}
-  .release-btn:hover .btn-arrow{transform:translateX(3px)}
-  .modal-overlay{position:fixed;inset:0;background:rgba(6,11,20,.85);backdrop-filter:blur(8px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
-  .modal-overlay.active{opacity:1;pointer-events:all}
-  .modal{background:var(--surface);border:1px solid var(--border);border-top-left-radius:24px;border-top-right-radius:24px;padding:28px 20px 36px;width:100%;max-width:480px;transform:translateY(30px);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
-  .modal-overlay.active .modal{transform:translateY(0)}
-  .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
-  .modal-warning-icon{width:64px;height:64px;background:rgba(255,215,42,.1);border:2px solid rgba(255,215,42,.3);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px;animation:ipulse 2s infinite}
-  @keyframes ipulse{0%,100%{box-shadow:0 0 0 0 rgba(255,215,42,.2)}50%{box-shadow:0 0 0 10px rgba(255,215,42,0)}}
-  .modal-title{font-family:var(--display);font-size:22px;font-weight:800;text-align:center;margin-bottom:8px}
-  .modal-subtitle{font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:20px;line-height:1.5}
-  .modal-details{background:rgba(0,152,234,.05);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px}
-  .detail-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px}
-  .detail-row+.detail-row{border-top:1px solid var(--border)}
-  .detail-key{color:var(--text-dim)}
-  .detail-val{color:var(--text);font-weight:500;text-align:right;max-width:60%;word-break:break-all}
-  .detail-val.highlight{color:var(--ton)}
-  .detail-val.warning{color:var(--yellow)}
-  .detail-val.dim{font-size:10px;color:var(--text-muted)}
-  .manual-check-notice{background:rgba(255,215,42,.07);border:1px solid rgba(255,215,42,.2);border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:11px;color:var(--yellow);line-height:1.6;display:flex;gap:8px;align-items:flex-start}
-  .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .btn-cancel{padding:16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text-dim);font-family:var(--mono);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
-  .btn-cancel:hover{border-color:var(--red);color:var(--red)}
-  .btn-confirm{padding:16px;background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:12px;color:#fff;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 4px 16px rgba(0,152,234,.3)}
-  .btn-confirm:hover{box-shadow:0 6px 20px rgba(0,152,234,.4);transform:translateY(-1px)}
-  .btn-confirm:active{transform:scale(.97)}
-  .tx-log{margin-top:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:none}
-  .tx-log.visible{display:block}
-  .tx-log-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:10px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase}
-  .tx-entry{padding:12px 14px;font-size:11px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);animation:si .3s ease}
-  .tx-entry:last-child{border-bottom:none}
-  @keyframes si{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
-  .tx-domain{color:var(--ton)}
-  .tx-meta{font-size:10px;color:var(--text-muted);margin-top:2px}
-  .tx-status{font-size:10px;padding:3px 8px;border-radius:6px;white-space:nowrap}
-  .tx-status.sent{background:rgba(0,214,143,.1);color:var(--green)}
-  .tx-status.pending{background:rgba(255,215,42,.1);color:var(--yellow)}
-  .tx-status.failed{background:rgba(255,71,87,.1);color:var(--red)}
-  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--surface);border:1px solid var(--green);border-radius:12px;padding:12px 20px;font-size:13px;color:var(--green);z-index:200;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 4px 20px rgba(0,214,143,.2);display:flex;align-items:center;gap:8px}
-  .toast.show{transform:translateX(-50%) translateY(0)}
-  .toast.error{border-color:var(--red);color:var(--red);box-shadow:0 4px 20px rgba(255,71,87,.2)}
-  .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  ::-webkit-scrollbar{width:4px}
-  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-  tc-root{z-index:9999!important}
+  .connect-gate.visible{display:block}
+  .release-btn{width:100%;padding:18px;background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:14px;color:#fff;font-size:17px;font-weight:700;cursor:pointer;margin-top:10px}
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--green);padding:14px 20px;border-radius:12px;z-index:9999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,214,143,.3);display:none}
+  .toast.show{display:block}
+  .toast.error{border-color:var(--red);color:var(--red)}
 </style>
 </head>
 <body>
@@ -136,252 +44,94 @@
     <div class="logo-icon">⬡</div>
     <div class="header-text">
       <h1>TON DNS Releaser</h1>
-      <p>dns_balance_release · Smart Contract</p>
+      <p>dns_balance_release</p>
     </div>
     <div class="wallet-area">
-      <button class="tc-connect-btn" id="connectHeaderBtn">Connect Wallet →</button>
+      <button class="tc-connect-btn" id="connectBtn">Connect Wallet</button>
       <div class="wallet-pill" id="walletPill" onclick="disconnectWallet()">
         <div class="wallet-dot"></div>
-        <span class="wallet-addr" id="walletAddr">...</span>
-        <span class="wallet-disconnect">✕</span>
+        <span id="walletAddr">...</span>
       </div>
     </div>
   </header>
 
-  <div class="connect-gate visible" id="connectGate">
-    <div class="connect-gate-icon">🔗</div>
-    <h2>Connect your wallet</h2>
-    <p>To call <strong>dns_balance_release</strong> you need a TON wallet connected via TonConnect.</p>
-    <button class="connect-gate-bigbtn" id="connectBigBtn">Connect Wallet →</button>
+  <div class="connect-gate" id="connectGate">
+    <h2>Collega il tuo wallet</h2>
+    <p>Usa Tonkeeper, Tonhub o altra wallet TON per continuare.</p>
+    <button class="release-btn" id="bigConnectBtn">Connect Wallet →</button>
   </div>
 
   <div class="main-form" id="mainForm">
-    <div class="manifest-status" id="manifestStatus"></div>
-    <!-- resto del form invariato -->
-    <div class="stats-row">
-      <div class="stat-card"><span class="stat-value">365<span class="stat-unit">d+</span></span><div class="stat-desc">Expiry required</div></div>
-      <div class="stat-card"><span class="stat-value">7<span class="stat-unit">d</span></span><div class="stat-desc">Auction window</div></div>
-      <div class="stat-card"><span class="stat-value">0.5<span class="stat-unit">TON</span></span><div class="stat-desc">Min. bid</div></div>
-    </div>
-
-    <div class="section-label">Target Domain</div>
-    <div class="input-card">
-      <div class="domain-row">
-        <input type="text" id="domainInput" placeholder="yourdomain" autocomplete="off" spellcheck="false"/>
-        <div class="ton-suffix">.ton</div>
-      </div>
-      <div class="input-hint">⚠ Verifica manualmente che il dominio sia scaduto da oltre 1 anno</div>
-    </div>
-
-    <div class="amount-section">
-      <div class="section-label">Initial Bid Amount</div>
-      <div class="amount-presets">
-        <button class="preset-btn active" data-amount="0.5"><span class="amount">0.5</span><span class="label">TON · Min</span></button>
-        <button class="preset-btn" data-amount="1"><span class="amount">1.0</span><span class="label">TON · Low</span></button>
-        <button class="preset-btn" data-amount="5"><span class="amount">5.0</span><span class="label">TON · Solid</span></button>
-      </div>
-      <div class="custom-amount-wrapper">
-        <span>Custom (TON)</span>
-        <input type="number" id="customAmount" placeholder="0.00" min="0.5" step="0.1"/>
-      </div>
-    </div>
-
-    <div class="info-box">
-      <div class="info-icon">ℹ️</div>
-      <div class="info-text">
-        Calling <strong>dns_balance_release</strong> triggers a 7-day re-auction.<br>
-        Gas ≈ 0.05 TON will be consumed.
-      </div>
-    </div>
-
+    <!-- Il tuo form qui (domain, amount, ecc.) -->
     <button class="release-btn" id="releaseBtn">Trigger Release →</button>
-    <div class="tx-log" id="txLog"><div class="tx-log-header">Transaction History · This Session</div></div>
   </div>
 </div>
 
-<!-- Modal e Toast invariati (li ho lasciati uguali) -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-warning-icon">⚠️</div>
-    <div class="modal-title">Confirm Release</div>
-    <div class="modal-subtitle">Signs via TonConnect and broadcasts on-chain.<br>This action is irreversible.</div>
-    <div class="modal-details">
-      <div class="detail-row"><span class="detail-key">Domain</span><span class="detail-val highlight" id="mDomain">—</span></div>
-      <div class="detail-row"><span class="detail-key">Bid Amount</span><span class="detail-val highlight" id="mAmount">—</span></div>
-      <div class="detail-row"><span class="detail-key">Gas (est.)</span><span class="detail-val">~0.05 TON</span></div>
-      <div class="detail-row"><span class="detail-key">Contract</span><span class="detail-val dim">EQC3dN…cSRE</span></div>
-      <div class="detail-row"><span class="detail-key">Method</span><span class="detail-val">dns_balance_release</span></div>
-      <div class="detail-row"><span class="detail-key">Your Wallet</span><span class="detail-val dim" id="mWallet">—</span></div>
-      <div class="detail-row"><span class="detail-key">Your Role</span><span class="detail-val warning">Initial Bidder</span></div>
-    </div>
-    <div class="manual-check-notice">
-      <span>⚠️</span>
-      <span><strong>Verifica manuale richiesta.</strong> Il dominio deve essere scaduto da <strong>oltre 1 anno</strong>.</span>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">✕ Cancel</button>
-      <button class="btn-confirm" id="confirmBtn" onclick="confirmRelease()">✓ Sign & Send</button>
-    </div>
-  </div>
-</div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ====================== CONFIG ======================
+// ==================== CONFIG ====================
 const DNS_ROOT = "EQC3dNlesgVD8YbAazcauaZz-lz0-8beV9oJFnna0GvYcSRE";
 
+let tonConnectUI = null;
+
+// Manifest (obbligatorio)
 const manifest = {
-  url: window.location.href.split('?')[0].split('#')[0], // URL corrente
+  url: window.location.href.split("?")[0].split("#")[0],
   name: "TON DNS Releaser",
   iconUrl: "https://images.seeklogo.com/logo-png/44/1/toncoin-ton-logo-png_seeklogo-440335.png"
 };
 
-const manifestUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
-// ===================================================
-
-let tonConnectUI;
-
-async function initTonConnect() {
-  tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: manifestUrl,
-    buttonRootId: null
-  });
-
-  tonConnectUI.onStatusChange(wallet => {
-    const pill = document.getElementById('walletPill');
-    const headerBtn = document.getElementById('connectHeaderBtn');
-    const gate = document.getElementById('connectGate');
-    const form = document.getElementById('mainForm');
-
-    if (wallet) {
-      const addr = wallet.account.address;
-      const short = addr.slice(0,6) + '…' + addr.slice(-4);
-      document.getElementById('walletAddr').textContent = short;
-      document.getElementById('mWallet').textContent = short;
-
-      pill.classList.add('visible');
-      headerBtn.style.display = 'none';
-      gate.classList.remove('visible');
-      form.classList.add('visible');
-
-      document.getElementById('manifestStatus').textContent = '✓ Connected · ' + short;
-      document.getElementById('manifestStatus').className = 'manifest-status ok';
-    } else {
-      pill.classList.remove('visible');
-      headerBtn.style.display = '';
-      gate.classList.add('visible');
-      form.classList.remove('visible');
-    }
-  });
-
-  // Button handlers
-  document.getElementById('connectHeaderBtn').onclick = () => tonConnectUI.openModal();
-  document.getElementById('connectBigBtn').onclick = () => tonConnectUI.openModal();
-  document.getElementById('releaseBtn').onclick = openModal;
-}
-
-// =============== Transaction ===============
-function buildPayload() {
-  const bocHex = "b5ee9c7201010101000c00001c4eb1f0f90000000000000000";
-  const bytes = new Uint8Array(bocHex.match(/.{2}/g).map(h => parseInt(h, 16)));
-  return btoa(String.fromCharCode(...bytes));
-}
-
-async function confirmRelease() {
-  const domain = document.getElementById('domainInput').value.trim().toLowerCase().replace(/\.ton$/, '');
-  const amount = parseFloat(document.getElementById('customAmount').value) || 
-                 parseFloat(document.querySelector('.preset-btn.active').dataset.amount);
-
-  if (!domain) return showToast("Inserisci il dominio", true);
-
-  const btn = document.getElementById('confirmBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>';
-
+// ==================== INIT ====================
+async function init() {
   try {
-    await tonConnectUI.sendTransaction({
-      validUntil: Math.floor(Date.now() / 1000) + 300,
-      messages: [{
-        address: DNS_ROOT,
-        amount: (BigInt(Math.floor(amount * 1e9))).toString(),
-        payload: buildPayload()
-      }]
+    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+      manifestUrl: `data:application/json,${encodeURIComponent(JSON.stringify(manifest))}`,
+      // buttonRootId non serve più
     });
 
-    closeModal();
-    showToast("Transazione inviata con successo!");
-    addTxEntry(domain, amount, 'sent');
-  } catch (err) {
-    const isUserCancel = /cancel|reject|declined/i.test(err?.message || '');
-    showToast(isUserCancel ? "Transazione annullata" : "Errore durante l'invio", true);
-    addTxEntry(domain, amount, 'failed');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "✓ Sign & Send";
+    tonConnectUI.onStatusChange((wallet) => {
+      if (wallet) {
+        const addr = wallet.account.address;
+        const short = addr.length > 10 ? addr.slice(0,6) + "..." + addr.slice(-4) : addr;
+        document.getElementById("walletAddr").textContent = short;
+        document.getElementById("walletPill").classList.add("visible");
+        document.getElementById("connectBtn").style.display = "none";
+        document.getElementById("connectGate").classList.remove("visible");
+        document.getElementById("mainForm").classList.add("visible");
+        showToast("Wallet connesso con successo!", false);
+      } else {
+        document.getElementById("walletPill").classList.remove("visible");
+        document.getElementById("connectBtn").style.display = "block";
+        document.getElementById("connectGate").classList.add("visible");
+        document.getElementById("mainForm").classList.remove("visible");
+      }
+    });
+
+    // Pulsanti connect
+    document.getElementById("connectBtn").onclick = () => tonConnectUI.openModal();
+    document.getElementById("bigConnectBtn").onclick = () => tonConnectUI.openModal();
+    document.getElementById("releaseBtn").onclick = () => alert("Aggiungi qui la logica di openModal()");
+
+  } catch (e) {
+    console.error(e);
+    showToast("Errore di inizializzazione TonConnect", true);
   }
 }
 
-// =============== Helpers ===============
-function toNano(ton) {
-  return (BigInt(Math.floor(parseFloat(ton) * 1e9))).toString();
-}
-
-function showToast(msg, error = false) {
-  const toast = document.getElementById('toast');
+function showToast(msg, isError = false) {
+  const toast = document.getElementById("toast");
   toast.textContent = msg;
-  toast.className = 'toast' + (error ? ' error' : '');
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3200);
+  toast.className = isError ? "toast error show" : "toast show";
+  setTimeout(() => toast.classList.remove("show"), 4000);
 }
 
-function addTxEntry(domain, amount, status) {
-  const log = document.getElementById('txLog');
-  log.classList.add('visible');
-  const entry = document.createElement('div');
-  entry.className = 'tx-entry';
-  entry.innerHTML = `
-    <div>
-      <div class="tx-domain">${domain}.ton</div>
-      <div class="tx-meta">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · ${amount} TON</div>
-    </div>
-    <span class="tx-status ${status}">${status === 'sent' ? 'Sent' : status === 'failed' ? 'Failed' : 'Pending'}</span>
-  `;
-  log.appendChild(entry);
-}
+window.disconnectWallet = async () => {
+  if (tonConnectUI) await tonConnectUI.disconnect();
+};
 
-function openModal() {
-  const domain = document.getElementById('domainInput').value.trim().toLowerCase().replace(/\.ton$/, '');
-  if (!domain) return showToast("Inserisci un dominio valido", true);
-
-  document.getElementById('mDomain').textContent = domain + '.ton';
-  document.getElementById('mAmount').textContent = 
-    (parseFloat(document.getElementById('customAmount').value) || 
-     parseFloat(document.querySelector('.preset-btn.active').dataset.amount)).toFixed(2) + ' TON';
-
-  document.getElementById('modalOverlay').classList.add('active');
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('active');
-}
-
-// Preset buttons
-document.querySelectorAll('.preset-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('customAmount').value = '';
-  });
-});
-
-// Init
-window.onload = initTonConnect;
-
-window.disconnectWallet = () => tonConnectUI.disconnect();
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.confirmRelease = confirmRelease;
+// Avvia tutto
+window.onload = init;
 </script>
 </body>
 </html>
