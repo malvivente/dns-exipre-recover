@@ -5,14 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>TON DNS Releaser</title>
 
-<!--
-  FIX 1: SDK aggiornato da 2.0.9 → 2.1.1 (stabile, fix connessione)
--->
 <script src="https://unpkg.com/@tonconnect/ui@2.1.1/dist/tonconnect-ui.min.js"></script>
 
-<!--
-  FIX 2: @ton/ton per costruire BOC corretti
--->
 <script src="https://cdn.jsdelivr.net/npm/@ton/ton@15.1.0/dist/ton.min.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
@@ -94,7 +88,6 @@
   .info-text{font-size:11px;color:var(--text-dim);line-height:1.6}
   .info-text strong{color:var(--ton);font-weight:500}
 
-  /* FIX 3: banner debug manifest */
   .manifest-status{font-size:10px;padding:6px 12px;border-radius:8px;margin-bottom:14px;display:none}
   .manifest-status.ok{background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.2);color:var(--green);display:block}
   .manifest-status.err{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);color:var(--red);display:block}
@@ -189,7 +182,6 @@
   </div>
 
   <div class="main-form" id="mainForm">
-    <!-- banner debug manifest -->
     <div class="manifest-status" id="manifestStatus"></div>
 
     <div class="stats-row">
@@ -270,13 +262,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════
-//  FIX 1 — Manifest inline via data URI
-//  Non dipende da host esterno, sempre raggiungibile.
-//  Il campo "url" è dinamico → uguale all'origine corrente.
-// ═══════════════════════════════════════════════════
 function buildManifestDataUrl() {
-  const origin = location.origin || 'https://example.com';
+  const origin = 'https://dns-exipre-recover.vercel.app' //location.origin || 'https://example.com';
   const manifest = {
     url: origin,
     name: 'TON DNS Releaser',
@@ -286,12 +273,6 @@ function buildManifestDataUrl() {
   return 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
 }
 
-// ═══════════════════════════════════════════════════
-//  FIX 2 — Payload BOC corretto
-//  op = 0x4eb1f0f9  query_id = 0  (due uint32 = 8 bytes)
-//  Costruiamo un BOC minimale manualmente senza librerie
-//  poiché @ton/ton CDN non è stabile lato browser.
-// ═══════════════════════════════════════════════════
 function buildBocPayload() {
   /*
     Cell TL-B: bits = op(32) + query_id(64) = 96 bit = 12 bytes
@@ -346,7 +327,6 @@ waitForTonConnect(function() {
 
   const DNS_ROOT = 'EQC3dNlesgVD8YbAazcauaZz-lz0-8beV9oJFnna0GvYcSRE';
 
-  // FIX 1 applicato: manifestUrl dinamico via data URI
   const manifestUrl = buildManifestDataUrl();
 
   let ui;
@@ -410,7 +390,6 @@ waitForTonConnect(function() {
         messages: [{
           address: DNS_ROOT,
           amount:  toNano(amount),
-          // FIX 2: BOC corretto invece di raw bytes
           payload: buildBocPayload(),
         }]
       };
@@ -426,7 +405,7 @@ waitForTonConnect(function() {
     }
   };
 
-}); // end waitForTonConnect
+});
 
 // ═══════════════════════════════════════════════════
 //  Helpers
