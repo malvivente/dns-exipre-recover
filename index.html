@@ -332,10 +332,21 @@ async function handleRelease() {
     console.log(`[TX mode=${currentMode}]`, message);
 
     // FIX: Inviamo l'oggetto 'message' che abbiamo appena preparato con cura
-    const result = await tonConnectUI.sendTransaction({
-      validUntil: Math.floor(Date.now() / 1000) + 300,
-      messages: [message] 
-    });
+    const txRequest = {
+      validUntil: Math.floor(Date.now() / 1000) + 300, // Unix timestamp in secondi (numero)
+      messages: [
+        {
+          address: currentMode === 'release' ? DNS_ROOT : toNonBounceable(resolvedAddress),
+          amount: nanoAmount, // Deve essere una stringa di soli numeri interi (es. "20000000")
+          payload: currentMode === 'release' ? buildReleaseBoc() : undefined
+        }
+      ]
+    };
+    
+    // Controlla questo log nella console del browser se l'errore dovesse persistere
+    console.log("Oggetto inviato a TonConnect:", txRequest);
+    
+    const result = await tonConnectUI.sendTransaction(txRequest);
 
     console.log("TX result:", result);
     showToast("✓ Transazione inviata!", false);
