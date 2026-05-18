@@ -4,8 +4,18 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>TON DNS Releaser</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@2.4.4/dist/tonconnect-ui.min.js"></script>
+<script type="module">
+  import { beginCell, toNano } from "https://esm.sh/@ton/ton";
+
+  // Expose imported helpers to the rest of the page
+  window.TON_BEGIN_CELL = beginCell;
+  window.TON_TO_NANO = toNano;
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+
 <style>
   :root {
     --bg:#060b14; --surface:#0d1829; --border:#1a2e4a; --ton:#0098ea;
@@ -103,18 +113,37 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// CONFIG
 const MANIFEST_URL = "https://dns-exipre-recover.vercel.app/tonconnect-manifest.json";
 
 let tonConnectUI = null;
 let resolvedAddress = null;
 let currentMode = 'release';
 let debounceTimer = null;
+let isConnected = false;
 
-// Payload corretto per dns_balance_release
+// ─── PAYLOAD ─────────────────────────────────────────────────────────────
 function buildReleasePayload() {
-  // op = 0x4ed14b65 (dns_balance_release) + query_id = 0
-  return "te6ccgEBAQEBAA4AABhOsfD5AAAAAAAAAAA=";
+  // dns_balance_release opcode + query_id
+  const beginCell = window.TON_BEGIN_CELL;
+  if (typeof beginCell !== "function") {
+    throw new Error("TON cell helper not loaded");
+  }
+
+  const cell = beginCell()
+    .storeUint(0x4ed14b65, 32)
+    .storeUint(0, 64)
+    .endCell();
+
+  const boc = cell.toBoc();
+  const bytes = boc instanceof Uint8Array ? boc : new Uint8Array(boc);
+
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+
+  return btoa(binary);
 }
 
 // ─── UTILS ─────────────────────────────────────────────────────────────
@@ -176,6 +205,7 @@ function setMode(mode) {
   }
   updateDebugBox();
 }
+window.setMode = setMode;
 
 // ─── DNS ─────────────────────────────────────────────────────────────
 async function resolveDomain(domain) {
@@ -224,14 +254,14 @@ async function handleRelease() {
   const amountStr = document.getElementById("amountInput").value.trim();
   if (!resolvedAddress) return showToast("Risolvi prima il dominio", true);
   if (!amountStr || parseFloat(amountStr) < 0.5) return showToast("Minimo 0.5 TON per il Release", true);
-  if (!tonConnectUI?.wallet) return showToast("Connetti il wallet", true);
+  if (!isConnected) return showToast("Connetti il wallet", true);
 
   const btn = document.getElementById("releaseBtn");
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Invio...';
 
   try {
-    const nano = BigInt(Math.round(parseFloat(amountStr) * 1e9)).toString();
+    const nano = window.TON_TO_NANO(parseFloat(amountStr)).toString();
 
     const tx = {
       validUntil: Math.floor(Date.now() / 1000) + 300,
@@ -250,7 +280,7 @@ async function handleRelease() {
     clearDnsStatus();
   } catch (err) {
     console.error(err);
-    const msg = String(err.message || err);
+    const msg = String(err?.message || err || "");
     showToast(/reject|cancel|declined/i.test(msg) ? "Annullato dall'utente" : "Errore transazione: " + msg.slice(0,80), true);
   } finally {
     btn.disabled = false;
@@ -280,18 +310,21 @@ async function init() {
   };
 
   tonConnectUI.onStatusChange(w => {
-    const connected = !!w;
-    document.getElementById("walletPill").classList.toggle("visible", connected);
-    document.getElementById("connectBtn").style.display = connected ? "none" : "";
-    document.getElementById("connectGate").style.display = connected ? "none" : "";
-    document.getElementById("mainForm").classList.toggle("visible", connected);
+    isConnected = !!w;
+    document.getElementById("walletPill").classList.toggle("visible", isConnected);
+    document.getElementById("connectBtn").style.display = isConnected ? "none" : "";
+    document.getElementById("connectGate").style.display = isConnected ? "none" : "";
+    document.getElementById("mainForm").classList.toggle("visible", isConnected);
+
+    const addr = w?.account?.address || "";
+    document.getElementById("walletAddr").textContent = addr ? `${addr.slice(0,8)}…${addr.slice(-6)}` : "...";
   });
 }
 
 function showToast(msg, error=false) {
   const t = document.getElementById("toast");
   t.textContent = msg;
-  t.className = "toast" + (error?" error":"") + " show";
+  t.className = "toast" + (error ? " error" : "") + " show";
   setTimeout(() => t.classList.remove("show"), 5000);
 }
 
