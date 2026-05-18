@@ -16,8 +16,9 @@
   .app{max-width:480px;margin:0 auto;padding:20px}
   header{display:flex;align-items:center;gap:12px;margin-bottom:30px}
   .logo-icon{width:44px;height:44px;background:var(--ton);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff}
-  .connect-btn{background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:12px;padding:14px 24px;color:#fff;font-weight:700;cursor:pointer;width:100%;font-size:17px;transition:opacity 0.2s;}
+  .connect-btn{background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:12px;padding:14px 24px;color:#fff;font-weight:700;cursor:pointer;width:100%;font-size:17px;transition:opacity 0.2s}
   .connect-btn:hover{opacity:0.9}
+  .connect-btn:disabled{opacity:0.5;cursor:not-allowed}
   .wallet-pill{display:none;align-items:center;gap:10px;background:#0d1829;border:1px solid var(--border);border-radius:12px;padding:10px 16px;cursor:pointer}
   .wallet-pill.visible{display:flex}
   .main-form{display:none}
@@ -26,13 +27,18 @@
   .form-group label{color:var(--text-dim);font-size:14px;font-weight:500}
   .form-group input{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-family:inherit;font-size:16px;outline:none;transition:border-color 0.2s}
   .form-group input:focus{border-color:var(--ton)}
-  .dns-status{font-size:12px;margin-top:4px;color:var(--text-dim);word-break:break-all;min-height:18px}
+  .dns-status{font-size:12px;margin-top:4px;word-break:break-all;min-height:18px;transition:color .2s}
+  .dns-status.loading{color:var(--text-dim)}
   .dns-status.success{color:var(--green)}
   .dns-status.error{color:var(--red)}
-  .dns-status.loading{color:var(--text-dim)}
-  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#0d1829;border:1px solid var(--green);padding:14px 20px;border-radius:12px;z-index:9999;white-space:nowrap;display:none;color:var(--green)}
-  .toast.show{display:block}
+  .debug-box{background:#0d1829;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;font-size:11px;color:var(--text-dim);line-height:1.7;display:none}
+  .debug-box.visible{display:block}
+  .debug-box .key{color:#0098ea}
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-60px);background:#0d1829;border:1px solid var(--green);padding:14px 20px;border-radius:12px;z-index:9999;white-space:nowrap;color:var(--green);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
   .toast.error{border-color:var(--red);color:var(--red)}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -41,86 +47,92 @@
     <div class="logo-icon">⬡</div>
     <h1>TON DNS Releaser</h1>
     <div style="margin-left:auto">
-      <button id="connectBtn" class="connect-btn" style="padding:10px 18px; font-size:14px;">Connect</button>
+      <button id="connectBtn" class="connect-btn" style="padding:10px 18px;font-size:14px">Connect</button>
       <div class="wallet-pill" id="walletPill" onclick="disconnectWallet()">
         <span id="walletAddr">...</span>
       </div>
     </div>
   </header>
+
   <div id="connectGate">
     <p style="text-align:center;color:var(--text-dim);margin:30px 0">Collega il wallet per continuare</p>
     <button id="bigConnectBtn" class="connect-btn">Connect Wallet →</button>
   </div>
+
   <div class="main-form" id="mainForm">
     <div class="form-group">
-      <label for="domainInput">Dominio TON da rilasciare/interagire</label>
+      <label for="domainInput">Dominio TON da rilasciare</label>
       <input type="text" id="domainInput" placeholder="esempio.ton" autocomplete="off">
       <div id="dnsStatus" class="dns-status"></div>
     </div>
+
+    <!-- Box debug: mostra address risolto e dettagli TX -->
+    <div class="debug-box" id="debugBox">
+      <div><span class="key">Indirizzo NFT:</span> <span id="dbAddr">—</span></div>
+      <div><span class="key">Formato:</span> <span id="dbFmt">—</span></div>
+    </div>
+
     <div class="form-group">
-      <label for="amountInput">Importo della transazione (TON)</label>
+      <label for="amountInput">Importo (TON)</label>
       <input type="number" id="amountInput" placeholder="0.05" step="0.01" min="0.001">
     </div>
+
     <button id="releaseBtn" class="connect-btn" style="margin-top:10px">Trigger Release →</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-const manifestUrl = "https://dns-exipre-recover.vercel.app/tonconnect-manifest.json";
+const MANIFEST_URL = "https://dns-exipre-recover.vercel.app/tonconnect-manifest.json";
+
 let tonConnectUI = null;
-let resolvedAddress = null;
+let resolvedAddress = null; // friendly format (EQ...)
 let debounceTimer = null;
 
-async function init() {
-  try {
-    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl });
-    document.getElementById("connectBtn").onclick = () => tonConnectUI.openModal();
-    document.getElementById("bigConnectBtn").onclick = () => tonConnectUI.openModal();
-    document.getElementById("releaseBtn").onclick = handleRelease;
-
-    document.getElementById("domainInput").oninput = (e) => {
-      clearTimeout(debounceTimer);
-      const domain = e.target.value.trim();
-      if (domain.length > 3) {
-        debounceTimer = setTimeout(() => resolveDomain(domain), 600);
-      } else {
-        clearDnsStatus();
-      }
-    };
-
-    tonConnectUI.onStatusChange(wallet => {
-      if (wallet) {
-        const addr = wallet.account.address;
-        const short = addr.slice(0,6) + "..." + addr.slice(-4);
-        document.getElementById("walletAddr").textContent = short;
-        document.getElementById("walletPill").classList.add("visible");
-        document.getElementById("connectBtn").style.display = "none";
-        document.getElementById("connectGate").style.display = "none";
-        document.getElementById("mainForm").classList.add("visible");
-      } else {
-        document.getElementById("walletPill").classList.remove("visible");
-        document.getElementById("connectBtn").style.display = "block";
-        document.getElementById("connectGate").style.display = "block";
-        document.getElementById("mainForm").classList.remove("visible");
-      }
-    });
-  } catch (e) {
-    console.error(e);
-    showToast("Errore TonConnect", true);
+// ─── ADDRESS UTILS ─────────────────────────────────────────────────────────
+// CRC16-XMODEM usato nel formato friendly TON
+function crc16(data) {
+  let crc = 0;
+  for (const byte of data) {
+    crc ^= byte << 8;
+    for (let i = 0; i < 8; i++) {
+      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+    }
   }
+  return crc;
 }
 
-// ─── DNS RESOLUTION ──────────────────────────────────────────
-// FIX: usare /v2/dns/{domain} (senza /resolve)
-// Il vecchio endpoint /resolve restituisce wallet.address SOLO se
-// il proprietario ha configurato un record wallet esplicito,
-// cosa rara. L'endpoint corretto restituisce item.address =
-// indirizzo NFT del dominio, usabile per qualsiasi TX.
+// Converte raw address "workchain:hexhash" → formato friendly base64url (EQ... o UQ...)
+function rawToFriendly(raw, bounceable = true) {
+  if (!raw || !raw.includes(':')) return raw; // già friendly o null
+  const [wcStr, hexHash] = raw.split(':');
+  const wc = parseInt(wcStr, 10);
+  if (isNaN(wc) || hexHash.length !== 64) return raw;
+
+  const hash = new Uint8Array(hexHash.match(/.{2}/g).map(h => parseInt(h, 16)));
+  const buf = new Uint8Array(36);
+  buf[0] = bounceable ? 0x11 : 0x51; // 0x11 = bounceable mainnet
+  buf[1] = wc & 0xff;
+  buf.set(hash, 2);
+  const crc = crc16(buf.slice(0, 34));
+  buf[34] = (crc >> 8) & 0xff;
+  buf[35] = crc & 0xff;
+
+  return btoa(String.fromCharCode(...buf)).replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+// Controlla se un address è già in formato friendly (inizia con EQ, UQ, Ef, ecc.)
+function isFriendly(addr) {
+  return /^[A-Za-z0-9_-]{48}$/.test(addr);
+}
+
+// ─── DNS RESOLUTION ────────────────────────────────────────────────────────
 async function resolveDomain(domain) {
   const statusEl = document.getElementById("dnsStatus");
+  const debugBox = document.getElementById("debugBox");
   statusEl.className = "dns-status loading";
   statusEl.textContent = "⏳ Risoluzione in corso...";
+  debugBox.classList.remove("visible");
   resolvedAddress = null;
 
   let fullDomain = domain.toLowerCase().trim();
@@ -129,10 +141,8 @@ async function resolveDomain(domain) {
   try {
     const res = await fetch(
       `https://tonapi.io/v2/dns/${encodeURIComponent(fullDomain)}`,
-      { headers: { 'Accept': 'application/json' } }
+      { headers: { Accept: 'application/json' } }
     );
-
-    // 404 = dominio non esistente/non registrato
     if (res.status === 404) {
       statusEl.className = "dns-status error";
       statusEl.textContent = "✗ Dominio non trovato su TON DNS.";
@@ -141,18 +151,26 @@ async function resolveDomain(domain) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
+    const rawAddr = data?.item?.address ?? data?.address ?? null;
 
-    // item.address = indirizzo contratto NFT del dominio
-    const addr = data?.item?.address ?? data?.address ?? null;
-
-    if (addr) {
-      resolvedAddress = addr;
-      statusEl.className = "dns-status success";
-      statusEl.textContent = `✓ ${addr.slice(0,10)}…${addr.slice(-8)}`;
-    } else {
+    if (!rawAddr) {
       statusEl.className = "dns-status error";
-      statusEl.textContent = "✗ Risposta API senza indirizzo. Riprova.";
+      statusEl.textContent = "✗ Nessun indirizzo nella risposta API.";
+      return;
     }
+
+    // Converti in friendly format se necessario
+    const friendly = isFriendly(rawAddr) ? rawAddr : rawToFriendly(rawAddr, true);
+    resolvedAddress = friendly;
+
+    // Mostra debug box
+    document.getElementById("dbAddr").textContent = friendly;
+    document.getElementById("dbFmt").textContent = isFriendly(rawAddr) ? "già friendly" : `convertito da raw (${rawAddr.slice(0,16)}...)`;
+    debugBox.classList.add("visible");
+
+    statusEl.className = "dns-status success";
+    statusEl.textContent = `✓ ${friendly.slice(0,10)}…${friendly.slice(-8)}`;
+
   } catch (err) {
     console.error("DNS resolve error:", err);
     statusEl.className = "dns-status error";
@@ -163,40 +181,92 @@ async function resolveDomain(domain) {
 
 function clearDnsStatus() {
   const el = document.getElementById("dnsStatus");
-  el.textContent = "";
-  el.className = "dns-status";
+  el.textContent = ""; el.className = "dns-status";
+  document.getElementById("debugBox").classList.remove("visible");
   resolvedAddress = null;
 }
 
-// ─── SEND TRANSACTION ────────────────────────────────────────
+// ─── TRANSACTION ───────────────────────────────────────────────────────────
 async function handleRelease() {
   const amount = document.getElementById("amountInput").value.trim();
+
   if (!resolvedAddress) { showToast("Risolvi prima un dominio .ton valido", true); return; }
   if (!amount || parseFloat(amount) <= 0) { showToast("Inserisci un importo valido", true); return; }
-  if (!tonConnectUI.connected) { showToast("Connetti il tuo wallet", true); return; }
+
+  // FIX: in TonConnect UI v2 la proprietà è .wallet, non .connected
+  const isConnected = !!(tonConnectUI?.wallet);
+  if (!isConnected) { showToast("Connetti il tuo wallet", true); return; }
+
+  const btn = document.getElementById("releaseBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Attendi...';
 
   try {
-    showToast("Conferma la transazione nel wallet...", false);
     const nanoAmount = BigInt(Math.round(parseFloat(amount) * 1e9)).toString();
-    const transaction = {
+
+    console.log("TX →", { address: resolvedAddress, amount: nanoAmount });
+
+    const result = await tonConnectUI.sendTransaction({
       validUntil: Math.floor(Date.now() / 1000) + 300,
       messages: [{ address: resolvedAddress, amount: nanoAmount }]
-    };
-    await tonConnectUI.sendTransaction(transaction);
-    showToast("✓ Transazione completata!", false);
+    });
+
+    console.log("TX result:", result);
+    showToast("✓ Transazione inviata!", false);
     document.getElementById("domainInput").value = "";
     document.getElementById("amountInput").value = "";
     clearDnsStatus();
+
+  } catch (err) {
+    console.error("TX error:", err);
+    // Distingui annullamento volontario da errore tecnico
+    const msg = String(err?.message ?? err);
+    const isUserCancel = /cancel|reject|declined|user reject/i.test(msg);
+    showToast(isUserCancel ? "Transazione annullata dall'utente" : `Errore TX: ${msg.slice(0,60)}`, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Trigger Release →";
+  }
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: MANIFEST_URL });
+
+    document.getElementById("connectBtn").onclick    = () => tonConnectUI.openModal();
+    document.getElementById("bigConnectBtn").onclick = () => tonConnectUI.openModal();
+    document.getElementById("releaseBtn").onclick    = handleRelease;
+
+    document.getElementById("domainInput").oninput = e => {
+      clearTimeout(debounceTimer);
+      const v = e.target.value.trim();
+      if (v.length > 3) debounceTimer = setTimeout(() => resolveDomain(v), 600);
+      else clearDnsStatus();
+    };
+
+    tonConnectUI.onStatusChange(wallet => {
+      const connected = !!wallet;
+      document.getElementById("walletPill").classList.toggle("visible", connected);
+      document.getElementById("connectBtn").style.display = connected ? "none" : "";
+      document.getElementById("connectGate").style.display = connected ? "none" : "";
+      document.getElementById("mainForm").classList.toggle("visible", connected);
+      if (wallet) {
+        const a = wallet.account.address;
+        document.getElementById("walletAddr").textContent = a.slice(0,6) + "…" + a.slice(-4);
+      }
+    });
+
   } catch (e) {
-    console.error(e);
-    showToast("Transazione rifiutata o fallita", true);
+    console.error("TonConnect init error:", e);
+    showToast("Errore inizializzazione TonConnect", true);
   }
 }
 
 function showToast(msg, isError = false) {
   const t = document.getElementById("toast");
   t.textContent = msg;
-  t.className = isError ? "toast error show" : "toast show";
+  t.className = "toast" + (isError ? " error" : "") + " show";
   setTimeout(() => t.classList.remove("show"), 4500);
 }
 
