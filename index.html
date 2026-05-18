@@ -19,11 +19,19 @@
   .app{max-width:480px;margin:0 auto;padding:20px}
   header{display:flex;align-items:center;gap:12px;margin-bottom:30px}
   .logo-icon{width:44px;height:44px;background:var(--ton);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff}
-  .connect-btn{background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:12px;padding:14px 24px;color:#fff;font-weight:700;cursor:pointer;width:100%;font-size:17px}
+  .connect-btn{background:linear-gradient(135deg,#0098ea,#006fa8);border:none;border-radius:12px;padding:14px 24px;color:#fff;font-weight:700;cursor:pointer;width:100%;font-size:17px;transition:opacity 0.2s;}
+  .connect-btn:hover{opacity:0.9}
   .wallet-pill{display:none;align-items:center;gap:10px;background:#0d1829;border:1px solid var(--border);border-radius:12px;padding:10px 16px;cursor:pointer}
   .wallet-pill.visible{display:flex}
+  
+  /* Stili aggiunti per il Form */
   .main-form{display:none}
   .main-form.visible{display:block}
+  .form-group{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+  .form-group label{color:var(--text-dim);font-size:14px;font-weight:500}
+  .form-group input{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-family:inherit;font-size:16px;outline:none;transition:border-color 0.2s}
+  .form-group input:focus{border-color:var(--ton)}
+  
   .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#0d1829;border:1px solid var(--green);padding:14px 20px;border-radius:12px;z-index:9999;white-space:nowrap;display:none}
   .toast.show{display:block}
   .toast.error{border-color:var(--red);color:var(--red)}
@@ -35,7 +43,7 @@
     <div class="logo-icon">⬡</div>
     <h1>TON DNS Releaser</h1>
     <div style="margin-left:auto">
-      <button id="connectBtn" class="connect-btn">Connect</button>
+      <button id="connectBtn" class="connect-btn" style="padding:10px 18px; font-size:14px;">Connect</button>
       <div class="wallet-pill" id="walletPill" onclick="disconnectWallet()">
         <span id="walletAddr">...</span>
       </div>
@@ -47,37 +55,47 @@
     <button id="bigConnectBtn" class="connect-btn">Connect Wallet →</button>
   </div>
 
+  <!-- FORM COMPLETO -->
   <div class="main-form" id="mainForm">
-    <!-- Qui il tuo form completo -->
-    <button id="releaseBtn" class="connect-btn" style="margin-top:20px">Trigger Release →</button>
+    <div class="form-group">
+      <label for="domainInput">Dominio TON da rilasciare/interagire</label>
+      <input type="text" id="domainInput" placeholder="esempio.ton" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label for="amountInput">Importo della transazione (TON)</label>
+      <input type="number" id="amountInput" placeholder="0.05" step="0.01" min="0.001">
+    </div>
+
+    <button id="releaseBtn" class="connect-btn" style="margin-top:10px">Trigger Release →</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// Usando un percorso relativo, TonConnect prenderà automaticamente il dominio corrente.
-// Se sei su Vercel userà il dominio di Vercel, se sei in locale userà localhost.
+// Configurazione dinamica del manifest basata sul dominio attuale
 const manifestUrl = window.location.origin + "/tonconnect-manifest.json"; 
+
+// CONFIGURAZIONE DESTINATARIO
+// Cambia questo indirizzo con quello del tuo Smart Contract o del wallet che riceve i fondi
+const DESTINATION_ADDRESS = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c"; 
 
 let tonConnectUI = null;
 
 async function init() {
   try {
-    // Inizializzazione corretta per la versione 2.x globale
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
       manifestUrl: manifestUrl
     });
 
-    // Gestione dei click sui bottoni di connessione
     document.getElementById("connectBtn").onclick = () => tonConnectUI.openModal();
     document.getElementById("bigConnectBtn").onclick = () => tonConnectUI.openModal();
+    document.getElementById("releaseBtn").onclick = handleRelease;
 
-    // Monitoraggio dello stato del wallet
     tonConnectUI.onStatusChange(wallet => {
       if (wallet) {
         const addr = wallet.account.address;
-        // TonConnect restituisce l'indirizzo in formato Raw, lo accorciamo per la UI
         const short = addr.slice(0,6) + "..." + addr.slice(-4);
         
         document.getElementById("walletAddr").textContent = short;
@@ -100,6 +118,62 @@ async function init() {
   }
 }
 
+// GESTIONE DELL'INVIO TRANSAZIONE
+async function handleRelease() {
+  const domain = document.getElementById("domainInput").value.trim();
+  const amount = document.getElementById("amountInput").value.trim();
+
+  // 1. Validazione Campi
+  if (!domain) {
+    showToast("Inserisci un dominio .ton valido", true);
+    return;
+  }
+  if (!amount || parseFloat(amount) <= 0) {
+    showToast("Inserisci un importo maggiore di 0", true);
+    return;
+  }
+
+  // Controlla se il wallet è effettivamente connesso
+  if (!tonConnectUI.connected) {
+    showToast("Connetti prima il tuo wallet!", true);
+    return;
+  }
+
+  try {
+    showToast("Richiesta inviata al wallet...", false);
+
+    // 2. Conversione TON in nanoTON (1 TON = 1.000.000.000 nanoTON)
+    const nanoAmount = (parseFloat(amount) * 1000000000).toFixed(0);
+
+    // 3. Struttura del payload della transazione per TonConnect
+    const transaction = {
+      validUntil: Math.floor(Date.now() / 1000) + 300, // Valida per i prossimi 5 minuti
+      messages: [
+        {
+          address: DESTINATION_ADDRESS,
+          amount: nanoAmount.toString(),
+          // Se hai bisogno di passare un commento o un payload in formato BoC (Cell), scommenta qui sotto:
+          // payload: "te6cckEBAQEAAgAAGEQoTitle..." 
+        }
+      ]
+    };
+
+    // 4. Invio della richiesta al wallet dell'utente
+    const result = await tonConnectUI.sendTransaction(transaction);
+    
+    console.log("Transazione confermata:", result);
+    showToast("Transazione inviata con successo!", false);
+    
+    // Pulisce il form dopo il successo
+    document.getElementById("domainInput").value = "";
+    document.getElementById("amountInput").value = "";
+
+  } catch (e) {
+    console.error("Errore durante l'invio della transazione:", e);
+    showToast("Transazione annullata o fallita", true);
+  }
+}
+
 function showToast(msg, isError = false) {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -114,7 +188,6 @@ window.disconnectWallet = async () => {
   }
 };
 
-// Avvia l'inizializzazione al caricamento della pagina
 window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
