@@ -130,6 +130,15 @@ let resolvedAddress = null;   // friendly address NFT item
 let currentMode = 'release';  // 'release' | 'transfer'
 let debounceTimer = null;
 
+function createReleasePayload() {
+  const cell = beginCell()
+    .storeUint(0x4ed14b65, 32)  // op
+    .storeUint(0, 64)           // query_id
+    .endCell();
+  
+  return cell.toBoc().toString('base64');
+}
+
 // ─── MODALITÀ ──────────────────────────────────────────────────────────────
 function setMode(mode) {
   currentMode = mode;
@@ -327,7 +336,11 @@ async function handleRelease() {
 
     const result = await tonConnectUI.sendTransaction({
       validUntil: Math.floor(Date.now() / 1000) + 300,
-      messages: [message]
+      messages: [{
+        address: resolvedAddress,
+        amount: nanoAmount,
+        payload: createReleasePayload()
+      }]
     });
 
     console.log("TX result:", result);
