@@ -261,7 +261,7 @@ async function handleRelease() {
   btn.innerHTML = '<span class="spinner"></span> Invio...';
 
   try {
-    const nano = window.TON_TO_NANO(parseFloat(amountStr)).toString();
+    const nano = BigInt(Math.round(parseFloat(amountStr) * 1e9)).toString();
 
     const tx = {
       validUntil: Math.floor(Date.now() / 1000) + 300,
