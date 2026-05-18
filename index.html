@@ -7,330 +7,273 @@
 <title>TON DNS Releaser</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@2.4.4/dist/tonconnect-ui.min.js"></script>
-<script src="https://unpkg.com/@ton/core/dist/index.global.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tonweb/0.0.66/tonweb.min.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 
 <style>
   :root {
-    --bg:#060b14;
-    --surface:#0d1829;
-    --border:#1a2e4a;
-    --ton:#0098ea;
-    --green:#00d68f;
-    --red:#ff4757;
-    --yellow:#ffd32a;
-    --text:#e8f4ff;
-    --text-dim:#7a9bbf;
+    --bg: #060b14;
+    --surface: #0d1829;
+    --border: #1a2e4a;
+    --ton: #0098ea;
+    --green: #00d68f;
+    --red: #ff4757;
+    --yellow: #ffd32a;
+    --text: #e8f4ff;
+    --text-dim: #7a9bbf;
   }
 
-  *{
-    box-sizing:border-box;
-    margin:0;
-    padding:0
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
 
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'JetBrains Mono',monospace;
-    min-height:100vh
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
   }
 
-  .app{
-    max-width:480px;
-    margin:0 auto;
-    padding:20px
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px;
   }
 
-  header{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:30px
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
   }
 
-  .logo-icon{
-    width:44px;
-    height:44px;
-    background:var(--ton);
-    border-radius:12px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:22px;
-    font-weight:800;
-    color:#fff
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--ton);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
   }
 
-  .connect-btn{
-    background:linear-gradient(135deg,#0098ea,#006fa8);
-    border:none;
-    border-radius:12px;
-    padding:14px 24px;
-    color:#fff;
-    font-weight:700;
-    cursor:pointer;
-    width:100%;
-    font-size:17px;
-    transition:opacity 0.2s
+  .connect-btn {
+    background: linear-gradient(135deg, #0098ea, #006fa8);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    font-size: 17px;
+    transition: opacity 0.2s;
   }
 
-  .connect-btn:hover{
-    opacity:0.9
+  .connect-btn:hover {
+    opacity: 0.9;
   }
 
-  .connect-btn:disabled{
-    opacity:0.5;
-    cursor:not-allowed
+  .connect-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
-  .wallet-pill{
-    display:none;
-    align-items:center;
-    gap:10px;
-    background:#0d1829;
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:10px 16px;
-    cursor:pointer
+  .wallet-pill {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: #0d1829;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
   }
 
-  .wallet-pill.visible{
-    display:flex
+  .wallet-pill.visible {
+    display: flex;
   }
 
-  .main-form{
-    display:none
+  .main-form {
+    display: none;
   }
 
-  .main-form.visible{
-    display:block
+  .main-form.visible {
+    display: block;
   }
 
-  .form-group{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    margin-bottom:20px
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
   }
 
-  .form-group label{
-    color:var(--text-dim);
-    font-size:14px;
-    font-weight:500
+  .form-group label {
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 500;
   }
 
-  .form-group input{
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:14px;
-    color:var(--text);
-    font-family:inherit;
-    font-size:16px;
-    outline:none;
-    transition:border-color 0.2s
+  .form-group input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s;
   }
 
-  .form-group input:focus{
-    border-color:var(--ton)
+  .form-group input:focus {
+    border-color: var(--ton);
   }
 
-  .dns-status{
-    font-size:12px;
-    margin-top:4px;
-    word-break:break-all;
-    min-height:18px
+  .dns-status {
+    font-size: 12px;
+    margin-top: 4px;
+    word-break: break-all;
+    min-height: 18px;
   }
 
-  .dns-status.loading{
-    color:var(--text-dim)
+  .dns-status.loading { color: var(--text-dim); }
+  .dns-status.success { color: var(--green); }
+  .dns-status.error { color: var(--red); }
+
+  .mode-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
   }
 
-  .dns-status.success{
-    color:var(--green)
+  .mode-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.4;
+    transition: all .15s;
   }
 
-  .dns-status.error{
-    color:var(--red)
+  .mode-btn:hover { border-color: var(--ton); }
+  .mode-btn.active {
+    background: rgba(0, 152, 234, .1);
+    border-color: var(--ton);
+    color: var(--text);
   }
 
-  .mode-selector{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-bottom:20px
+  .info-box {
+    background: rgba(255, 211, 42, .05);
+    border: 1px solid rgba(255, 211, 42, .2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 11px;
+    color: var(--yellow);
+    line-height: 1.6;
   }
 
-  .mode-btn{
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:14px 10px;
-    color:var(--text-dim);
-    font-family:inherit;
-    font-size:12px;
-    cursor:pointer;
-    text-align:center;
-    line-height:1.4;
-    transition:all .15s
+  .info-box.blue {
+    background: rgba(0, 152, 234, .05);
+    border-color: rgba(0, 152, 234, .2);
+    color: var(--text-dim);
   }
 
-  .mode-btn:hover{
-    border-color:var(--ton)
+  .debug-box {
+    background: #0d1829;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.8;
+    display: none;
   }
 
-  .mode-btn.active{
-    background:rgba(0,152,234,.1);
-    border-color:var(--ton);
-    color:var(--text)
+  .debug-box.visible { display: block; }
+  .debug-box .key { color: var(--ton); }
+
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-60px);
+    background: #0d1829;
+    border: 1px solid var(--green);
+    padding: 14px 20px;
+    border-radius: 12px;
+    z-index: 9999;
+    color: var(--green);
+    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+    white-space: nowrap;
   }
 
-  .info-box{
-    background:rgba(255,211,42,.05);
-    border:1px solid rgba(255,211,42,.2);
-    border-radius:10px;
-    padding:12px 14px;
-    margin-bottom:16px;
-    font-size:11px;
-    color:var(--yellow);
-    line-height:1.6
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, .3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
   }
 
-  .info-box.blue{
-    background:rgba(0,152,234,.05);
-    border-color:rgba(0,152,234,.2);
-    color:var(--text-dim)
-  }
-
-  .debug-box{
-    background:#0d1829;
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:12px;
-    margin-bottom:16px;
-    font-size:11px;
-    color:var(--text-dim);
-    line-height:1.8;
-    display:none
-  }
-
-  .debug-box.visible{
-    display:block
-  }
-
-  .debug-box .key{
-    color:var(--ton)
-  }
-
-  .toast{
-    position:fixed;
-    top:20px;
-    left:50%;
-    transform:translateX(-50%) translateY(-60px);
-    background:#0d1829;
-    border:1px solid var(--green);
-    padding:14px 20px;
-    border-radius:12px;
-    z-index:9999;
-    color:var(--green);
-    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
-    white-space:nowrap
-  }
-
-  .toast.show{
-    transform:translateX(-50%) translateY(0)
-  }
-
-  .toast.error{
-    border-color:var(--red);
-    color:var(--red)
-  }
-
-  .spinner{
-    display:inline-block;
-    width:12px;
-    height:12px;
-    border:2px solid rgba(255,255,255,.3);
-    border-top-color:#fff;
-    border-radius:50%;
-    animation:spin .7s linear infinite;
-    vertical-align:middle;
-    margin-right:6px
-  }
-
-  @keyframes spin{
-    to{
-      transform:rotate(360deg)
-    }
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
-
 <body>
 
 <div class="app">
-
   <header>
     <div class="logo-icon">⬡</div>
-
     <h1>TON DNS Releaser</h1>
-
-    <div style="margin-left:auto">
-
-      <button id="connectBtn" class="connect-btn" style="padding:10px 18px;font-size:14px">
-        Connect
-      </button>
-
+    <div style="margin-left: auto">
+      <button id="connectBtn" class="connect-btn" style="padding: 10px 18px; font-size: 14px">Connect</button>
       <div class="wallet-pill" id="walletPill" onclick="disconnectWallet()">
         <span id="walletAddr">...</span>
       </div>
-
     </div>
   </header>
 
   <div id="connectGate">
-    <p style="text-align:center;color:var(--text-dim);margin:30px 0">
-      Collega il wallet per continuare
-    </p>
-
-    <button id="bigConnectBtn" class="connect-btn">
-      Connect Wallet →
-    </button>
+    <p style="text-align: center; color: var(--text-dim); margin: 30px 0">Collega il wallet per continuare</p>
+    <button id="bigConnectBtn" class="connect-btn">Connect Wallet →</button>
   </div>
 
   <div class="main-form" id="mainForm">
-
-    <div style="font-size:10px;letter-spacing:2px;color:#3a5470;text-transform:uppercase;margin-bottom:8px">
-      Modalità
-    </div>
-
+    <div style="font-size: 10px; letter-spacing: 2px; color: #3a5470; text-transform: uppercase; margin-bottom: 8px">Modalità</div>
     <div class="mode-selector">
-      <button class="mode-btn active" id="modeRelease" onclick="setMode('release')">
-        🔓 DNS Release
-      </button>
-
-      <button class="mode-btn" id="modeTransfer" onclick="setMode('transfer')">
-        💸 Transfer
-      </button>
+      <button class="mode-btn active" id="modeRelease" onclick="setMode('release')">🔓 DNS Release</button>
+      <button class="mode-btn" id="modeTransfer" onclick="setMode('transfer')">💸 Transfer</button>
     </div>
 
     <div class="info-box" id="modeInfo">
-      ⚠️ <strong>Release:</strong>
-      Chiama <code>dns_balance_release</code> direttamente sul contratto del dominio scaduto
+      ⚠️ <strong>Release:</strong> Chiama <code>dns_balance_release</code> direttamente sul contratto del dominio scaduto.
     </div>
 
     <div class="form-group">
       <label for="domainInput">Dominio TON</label>
-
-      <input
-        type="text"
-        id="domainInput"
-        placeholder="esempio.ton"
-        autocomplete="off"
-      >
-
+      <input type="text" id="domainInput" placeholder="esempio.ton" autocomplete="off">
       <div id="dnsStatus" class="dns-status"></div>
     </div>
 
@@ -341,31 +284,18 @@
     </div>
 
     <div class="form-group">
-      <label for="amountInput">Importo (TON)</label>
-
-      <input
-        type="number"
-        id="amountInput"
-        placeholder="0.5"
-        step="0.01"
-        min="0.5"
-        value="0.5"
-      >
+      <label for="amountInput">Importo (TON - Minimo Consigliato Asta)</label>
+      <input type="number" id="amountInput" placeholder="0.5" step="0.01" min="0.5" value="0.5">
     </div>
 
-    <button id="releaseBtn" class="connect-btn" style="margin-top:10px">
-      Trigger Release →
-    </button>
-
+    <button id="releaseBtn" class="connect-btn" style="margin-top: 10px">Trigger Release →</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-
-const MANIFEST_URL =
-  "https://dns-exipre-recover.vercel.app/tonconnect-manifest.json";
+const MANIFEST_URL = "https://dns-exipre-recover.vercel.app/tonconnect-manifest.json";
 
 let tonConnectUI = null;
 let resolvedAddress = null;
@@ -373,432 +303,195 @@ let currentMode = 'release';
 let debounceTimer = null;
 
 // ─────────────────────────────────────────────────────────────
-// PAYLOAD
+// COSTRUZIONE PAYLOAD CON TONWEB (CORRETTO E STABILE)
 // ─────────────────────────────────────────────────────────────
-
 function buildReleasePayload() {
+  // Crea una nuova cella utilizzando TonWeb
+  const cell = new TonWeb.boc.Cell();
+  
+  // Scrive la firma di operazione (op) per dns_balance_release: 0x4ed14b65 (32 bit)
+  cell.bits.writeUint(0x4ed14b65, 32);
+  // Scrive il query_id: 0 (64 bit)
+  cell.bits.writeUint(0, 64);
 
-  const cell = TonCore.beginCell()
-    .storeUint(0x4ed14b65, 32)
-    .storeUint(0, 64)
-    .endCell();
-
-  const boc = cell.toBoc();
-
-  let binary = '';
-
-  for (let i = 0; i < boc.length; i++) {
-    binary += String.fromCharCode(boc[i]);
-  }
-
-  return btoa(binary);
+  // Converte la cella in BOC in formato Base64 standard richiesto da TON Connect
+  return TonWeb.utils.bytesToBase64(cell.toBoc());
 }
 
 // ─────────────────────────────────────────────────────────────
-// UTILS
+// UTILS PER GLI INDIRIZZI
 // ─────────────────────────────────────────────────────────────
-
-function crc16(data) {
-
-  let crc = 0;
-
-  for (const byte of data) {
-
-    crc ^= byte << 8;
-
-    for (let i = 0; i < 8; i++) {
-
-      crc = (crc & 0x8000)
-        ? ((crc << 1) ^ 0x1021) & 0xffff
-        : (crc << 1) & 0xffff;
-    }
-  }
-
-  return crc;
-}
-
-function rawToFriendly(raw, bounceable = true) {
-
-  if (!raw?.includes(':')) return raw;
-
-  const [wcStr, hexHash] = raw.split(':');
-
-  const wc = parseInt(wcStr);
-
-  if (isNaN(wc) || hexHash.length !== 64) return raw;
-
-  const hash = new Uint8Array(
-    hexHash.match(/.{2}/g).map(h => parseInt(h,16))
-  );
-
-  const buf = new Uint8Array(36);
-
-  buf[0] = bounceable ? 0x11 : 0x51;
-  buf[1] = wc & 0xff;
-
-  buf.set(hash, 2);
-
-  const crc = crc16(buf.slice(0,34));
-
-  buf[34] = (crc >> 8) & 0xff;
-  buf[35] = crc & 0xff;
-
-  return btoa(String.fromCharCode(...buf))
-    .replace(/\+/g,'-')
-    .replace(/\//g,'_');
-}
-
-function isFriendly(addr) {
-  return /^[A-Za-z0-9_-]{48}$/.test(addr);
-}
-
 function toNonBounceable(friendly) {
-
   try {
-
-    let b64 = friendly
-      .replace(/-/g,'+')
-      .replace(/_/g,'/');
-
-    let raw = Uint8Array.from(
-      atob(b64),
-      c => c.charCodeAt(0)
-    );
-
-    raw[0] = 0x51;
-
-    const crc = crc16(raw.slice(0,34));
-
-    raw[34] = (crc>>8)&0xff;
-    raw[35] = crc&0xff;
-
-    return btoa(String.fromCharCode(...raw))
-      .replace(/\+/g,'-')
-      .replace(/\//g,'_');
-
+    const address = new TonWeb.utils.Address(friendly);
+    return address.toString(true, true, false); // IsUserFriendly=true, UrlSafe=true, Bounceable=false
   } catch(e) {
-
     return friendly;
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// MODE
+// GESTIONE MODALITÀ
 // ─────────────────────────────────────────────────────────────
-
 function setMode(mode) {
-
   currentMode = mode;
-
-  document.getElementById("modeRelease")
-    .classList.toggle("active", mode==='release');
-
-  document.getElementById("modeTransfer")
-    .classList.toggle("active", mode==='transfer');
+  document.getElementById("modeRelease").classList.toggle("active", mode === 'release');
+  document.getElementById("modeTransfer").classList.toggle("active", mode === 'transfer');
 
   const info = document.getElementById("modeInfo");
-
   if (mode === 'release') {
-
     info.className = "info-box";
-
-    info.innerHTML =
-      '⚠️ <strong>DNS Release:</strong> Invia al contratto del dominio con op <code>0x4ed14b65</code>';
-
+    info.innerHTML = '⚠️ <strong>DNS Release:</strong> Invia al contratto del dominio con op <code>0x4ed14b65</code>';
   } else {
-
     info.className = "info-box blue";
-
-    info.innerHTML =
-      'ℹ️ <strong>Transfer:</strong> Invio semplice TON all’indirizzo del dominio';
+    info.innerHTML = 'ℹ️ <strong>Transfer:</strong> Invio semplice TON all’indirizzo del dominio';
   }
-
   updateDebugBox();
 }
 
 // ─────────────────────────────────────────────────────────────
-// DNS
+// RISOLUZIONE DOMINIO TON VIA API
 // ─────────────────────────────────────────────────────────────
-
 async function resolveDomain(domain) {
-
-  const statusEl =
-    document.getElementById("dnsStatus");
-
+  const statusEl = document.getElementById("dnsStatus");
   statusEl.className = "dns-status loading";
   statusEl.textContent = "⏳ Risoluzione...";
-
   resolvedAddress = null;
-
-  document.getElementById("debugBox")
-    .classList.remove("visible");
+  document.getElementById("debugBox").classList.remove("visible");
 
   let full = domain.toLowerCase().trim();
-
   if (!full.endsWith('.ton')) {
     full += '.ton';
   }
 
   try {
-
-    const res = await fetch(
-      `https://tonapi.io/v2/dns/${encodeURIComponent(full)}`
-    );
-
-    if (res.status === 404) {
-      throw new Error("Dominio non trovato");
-    }
-
-    if (!res.ok) {
-      throw new Error("Errore API");
-    }
+    const res = await fetch(`https://tonapi.io/v2/dns/${encodeURIComponent(full)}`);
+    if (res.status === 404) throw new Error("Dominio non trovato");
+    if (!res.ok) throw new Error("Errore API");
 
     const data = await res.json();
+    const raw = data?.item?.address || data?.address;
+    if (!raw) throw new Error("Nessun indirizzo associato");
 
-    const raw =
-      data?.item?.address ||
-      data?.address;
-
-    if (!raw) {
-      throw new Error("Nessun indirizzo");
-    }
-
-    resolvedAddress =
-      isFriendly(raw)
-        ? raw
-        : rawToFriendly(raw, true);
+    // Converte l'indirizzo in formato friendly leggibile usando TonWeb
+    const addrObj = new TonWeb.utils.Address(raw);
+    resolvedAddress = addrObj.toString(true, true, true);
 
     statusEl.className = "dns-status success";
-
-    statusEl.textContent =
-      `✓ ${resolvedAddress.slice(0,10)}…${resolvedAddress.slice(-8)}`;
-
+    statusEl.textContent = `✓ ${resolvedAddress.slice(0, 10)}…${resolvedAddress.slice(-8)}`;
     updateDebugBox();
-
   } catch (e) {
-
     statusEl.className = "dns-status error";
     statusEl.textContent = `✗ ${e.message}`;
   }
 }
 
 function updateDebugBox() {
-
   if (!resolvedAddress) return;
 
-  const dest =
-    currentMode === 'release'
-      ? resolvedAddress
-      : toNonBounceable(resolvedAddress);
+  const dest = currentMode === 'release' ? resolvedAddress : toNonBounceable(resolvedAddress);
+  const type = currentMode === 'release' ? "dns_balance_release (0x4ed14b65)" : "Simple Transfer";
 
-  const type =
-    currentMode === 'release'
-      ? "dns_balance_release"
-      : "Simple Transfer";
-
-  document.getElementById("dbAddr").textContent =
-    resolvedAddress.slice(0,8)+"…"+resolvedAddress.slice(-6);
-
-  document.getElementById("dbDest").textContent =
-    dest.slice(0,8)+"…"+dest.slice(-6);
-
-  document.getElementById("dbType").textContent =
-    type;
-
-  document.getElementById("debugBox")
-    .classList.add("visible");
+  document.getElementById("dbAddr").textContent = resolvedAddress.slice(0, 8) + "…" + resolvedAddress.slice(-6);
+  document.getElementById("dbDest").textContent = dest.slice(0, 8) + "…" + dest.slice(-6);
+  document.getElementById("dbType").textContent = type;
+  document.getElementById("debugBox").classList.add("visible");
 }
 
 // ─────────────────────────────────────────────────────────────
-// TX
+// INVIO TRANSAZIONE AL WALLET COLLEGATO
 // ─────────────────────────────────────────────────────────────
-
 async function handleRelease() {
+  const amountStr = document.getElementById("amountInput").value.trim();
 
-  const amountStr =
-    document.getElementById("amountInput")
-      .value
-      .trim();
+  if (!resolvedAddress) return showToast("Risolvi prima il dominio", true);
+  if (!amountStr || parseFloat(amountStr) < 0.5) return showToast("Minimo 0.5 TON", true);
+  if (!tonConnectUI?.wallet) return showToast("Connetti il wallet", true);
 
-  if (!resolvedAddress) {
-    return showToast("Risolvi prima il dominio", true);
-  }
-
-  if (!amountStr || parseFloat(amountStr) < 0.5) {
-    return showToast("Minimo 0.5 TON", true);
-  }
-
-  if (!tonConnectUI?.wallet) {
-    return showToast("Connetti il wallet", true);
-  }
-
-  const btn =
-    document.getElementById("releaseBtn");
-
+  const btn = document.getElementById("releaseBtn");
   btn.disabled = true;
-
-  btn.innerHTML =
-    '<span class="spinner"></span> Invio...';
+  btn.innerHTML = '<span class="spinner"></span> Invio...';
 
   try {
-
-    const nano =
-      BigInt(
-        Math.round(parseFloat(amountStr) * 1e9)
-      ).toString();
+    // Converte il valore in NanoTON (1 TON = 1e9 NanoTON)
+    const nano = TonWeb.utils.toNano(amountStr).toString();
 
     const tx = {
-
-      validUntil:
-        Math.floor(Date.now() / 1000) + 300,
-
+      validUntil: Math.floor(Date.now() / 1000) + 300,
       messages: [{
-
-        address:
-          currentMode === 'release'
-            ? resolvedAddress
-            : toNonBounceable(resolvedAddress),
-
+        address: currentMode === 'release' ? resolvedAddress : toNonBounceable(resolvedAddress),
         amount: nano,
-
-        payload:
-          currentMode === 'release'
-            ? buildReleasePayload()
-            : undefined
+        payload: currentMode === 'release' ? buildReleasePayload() : undefined
       }]
     };
 
-    console.log("TX:", tx);
-
     await tonConnectUI.sendTransaction(tx);
-
-    showToast("✅ Transazione inviata!");
-
+    showToast("✅ Transazione inviata con successo!");
     document.getElementById("domainInput").value = "";
-
     clearDnsStatus();
-
   } catch (err) {
-
     console.error(err);
-
-    const msg =
-      String(err.message || err);
-
-    showToast(
-      /reject|cancel|declined/i.test(msg)
-        ? "Annullato dall'utente"
-        : "Errore: " + msg.slice(0,80),
-      true
-    );
-
+    const msg = String(err.message || err);
+    showToast(/reject|cancel|declined/i.test(msg) ? "Annullato dall'utente" : "Errore: " + msg.slice(0, 80), true);
   } finally {
-
     btn.disabled = false;
-
-    btn.textContent =
-      "Trigger Release →";
+    btn.textContent = "Trigger Release →";
   }
 }
 
 function clearDnsStatus() {
-
   document.getElementById("dnsStatus").textContent = "";
-
-  document.getElementById("debugBox")
-    .classList.remove("visible");
-
+  document.getElementById("debugBox").classList.remove("visible");
   resolvedAddress = null;
 }
 
 // ─────────────────────────────────────────────────────────────
-// INIT
+// INIZIALIZZAZIONE APPLICAZIONE
 // ─────────────────────────────────────────────────────────────
-
 async function init() {
+  tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: MANIFEST_URL
+  });
 
-  tonConnectUI =
-    new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: MANIFEST_URL
-    });
+  document.getElementById("connectBtn").onclick = () => tonConnectUI.openModal();
+  document.getElementById("bigConnectBtn").onclick = () => tonConnectUI.openModal();
+  document.getElementById("releaseBtn").onclick = handleRelease;
 
-  document.getElementById("connectBtn")
-    .onclick = () => tonConnectUI.openModal();
-
-  document.getElementById("bigConnectBtn")
-    .onclick = () => tonConnectUI.openModal();
-
-  document.getElementById("releaseBtn")
-    .onclick = handleRelease;
-
-  document.getElementById("domainInput")
-    .oninput = e => {
-
-      clearTimeout(debounceTimer);
-
-      const v = e.target.value.trim();
-
-      if (v.length > 3) {
-
-        debounceTimer =
-          setTimeout(() => resolveDomain(v), 600);
-
-      } else {
-
-        clearDnsStatus();
-      }
-    };
+  document.getElementById("domainInput").oninput = e => {
+    clearTimeout(debounceTimer);
+    const v = e.target.value.trim();
+    if (v.length > 3) {
+      debounceTimer = setTimeout(() => resolveDomain(v), 600);
+    } else {
+      clearDnsStatus();
+    }
+  };
 
   tonConnectUI.onStatusChange(w => {
-
     const connected = !!w;
-
-    document.getElementById("walletPill")
-      .classList.toggle("visible", connected);
-
-    document.getElementById("connectBtn")
-      .style.display = connected ? "none" : "";
-
-    document.getElementById("connectGate")
-      .style.display = connected ? "none" : "";
-
-    document.getElementById("mainForm")
-      .classList.toggle("visible", connected);
+    document.getElementById("walletPill").classList.toggle("visible", connected);
+    document.getElementById("connectBtn").style.display = connected ? "none" : "";
+    document.getElementById("connectGate").style.display = connected ? "none" : "";
+    document.getElementById("mainForm").classList.toggle("visible", connected);
 
     if (connected) {
-
-      const addr = w.account.address;
-
-      document.getElementById("walletAddr")
-        .textContent =
-          addr.slice(0,6) + "…" + addr.slice(-4);
+      const rawAddr = w.account.address;
+      const addrObj = new TonWeb.utils.Address(rawAddr);
+      const friendly = addrObj.toString(true, true, true);
+      document.getElementById("walletAddr").textContent = friendly.slice(0, 6) + "…" + friendly.slice(-4);
     }
   });
 }
 
-function showToast(msg, error=false) {
-
+function showToast(msg, error = false) {
   const t = document.getElementById("toast");
-
   t.textContent = msg;
-
-  t.className =
-    "toast" +
-    (error ? " error" : "") +
-    " show";
-
-  setTimeout(() => {
-    t.classList.remove("show");
-  }, 5000);
+  t.className = "toast" + (error ? " error" : "") + " show";
+  setTimeout(() => t.classList.remove("show"), 5000);
 }
 
 window.disconnectWallet = () => tonConnectUI?.disconnect();
-
-window.addEventListener(
-  'DOMContentLoaded',
-  init
-);
-
+window.addEventListener('DOMContentLoaded', init);
 </script>
 
 </body>
