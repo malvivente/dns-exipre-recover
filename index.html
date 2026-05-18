@@ -9,7 +9,7 @@
 <style>
   :root {
     --bg:#060b14; --surface:#0d1829; --border:#1a2e4a; --ton:#0098ea;
-    --green:#00d68f; --red:#ff4757; --text:#e8f4ff; --text-dim:#7a9bbf;
+    --green:#00d68f; --red:#ff4757; --yellow:#ffd32a; --text:#e8f4ff; --text-dim:#7a9bbf;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh}
@@ -27,14 +27,31 @@
   .form-group label{color:var(--text-dim);font-size:14px;font-weight:500}
   .form-group input{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-family:inherit;font-size:16px;outline:none;transition:border-color 0.2s}
   .form-group input:focus{border-color:var(--ton)}
-  .dns-status{font-size:12px;margin-top:4px;word-break:break-all;min-height:18px;transition:color .2s}
+  .dns-status{font-size:12px;margin-top:4px;word-break:break-all;min-height:18px}
   .dns-status.loading{color:var(--text-dim)}
   .dns-status.success{color:var(--green)}
   .dns-status.error{color:var(--red)}
-  .debug-box{background:#0d1829;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;font-size:11px;color:var(--text-dim);line-height:1.7;display:none}
+
+  /* Selettore modalità TX */
+  .mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+  .mode-btn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 10px;color:var(--text-dim);font-family:inherit;font-size:12px;cursor:pointer;text-align:center;line-height:1.4;transition:all .15s}
+  .mode-btn:hover{border-color:var(--ton)}
+  .mode-btn.active{background:rgba(0,152,234,.1);border-color:var(--ton);color:var(--text)}
+  .mode-btn .mode-title{font-weight:700;font-size:13px;display:block;margin-bottom:3px}
+  .mode-btn .mode-desc{font-size:10px;color:var(--text-muted,#3a5470);display:block}
+  .mode-btn.active .mode-desc{color:var(--text-dim)}
+
+  /* Info box */
+  .info-box{background:rgba(255,211,42,.05);border:1px solid rgba(255,211,42,.2);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:11px;color:var(--yellow);line-height:1.6}
+  .info-box.blue{background:rgba(0,152,234,.05);border-color:rgba(0,152,234,.2);color:var(--text-dim)}
+  .info-box strong{color:inherit;font-weight:600}
+
+  /* Debug box */
+  .debug-box{background:#0d1829;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;font-size:11px;color:var(--text-dim);line-height:1.8;display:none}
   .debug-box.visible{display:block}
-  .debug-box .key{color:#0098ea}
-  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-60px);background:#0d1829;border:1px solid var(--green);padding:14px 20px;border-radius:12px;z-index:9999;white-space:nowrap;color:var(--green);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+  .debug-box .key{color:var(--ton)}
+
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-60px);background:#0d1829;border:1px solid var(--green);padding:14px 20px;border-radius:12px;z-index:9999;color:var(--green);transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap}
   .toast.show{transform:translateX(-50%) translateY(0)}
   .toast.error{border-color:var(--red);color:var(--red)}
   .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
@@ -60,21 +77,40 @@
   </div>
 
   <div class="main-form" id="mainForm">
+
+    <!-- Selezione modalità -->
+    <div style="font-size:10px;letter-spacing:2px;color:#3a5470;text-transform:uppercase;margin-bottom:8px">Modalità operazione</div>
+    <div class="mode-selector">
+      <button class="mode-btn active" id="modeRelease" onclick="setMode('release')">
+        <span class="mode-title">🔓 DNS Release</span>
+        <span class="mode-desc">Chiama dns_balance_release sul contratto ROOT con payload BOC</span>
+      </button>
+      <button class="mode-btn" id="modeTransfer" onclick="setMode('transfer')">
+        <span class="mode-title">💸 Trasferimento</span>
+        <span class="mode-desc">Invia TON all'indirizzo risolto dal dominio (non-bounceable)</span>
+      </button>
+    </div>
+
+    <!-- Info contestuale -->
+    <div class="info-box" id="modeInfo">
+      ⚠️ <strong>DNS Release:</strong> invia al contratto ROOT <code>EQC3dN…cSRE</code> con payload op <code>0x4eb1f0f9</code>. Il tuo importo diventa l'offerta iniziale dell'asta (min 0.5 TON).
+    </div>
+
     <div class="form-group">
-      <label for="domainInput">Dominio TON da rilasciare</label>
+      <label for="domainInput">Dominio TON</label>
       <input type="text" id="domainInput" placeholder="esempio.ton" autocomplete="off">
       <div id="dnsStatus" class="dns-status"></div>
     </div>
 
-    <!-- Box debug: mostra address risolto e dettagli TX -->
     <div class="debug-box" id="debugBox">
-      <div><span class="key">Indirizzo NFT:</span> <span id="dbAddr">—</span></div>
-      <div><span class="key">Formato:</span> <span id="dbFmt">—</span></div>
+      <div><span class="key">NFT item:</span> <span id="dbAddr">—</span></div>
+      <div><span class="key">Destinazione TX:</span> <span id="dbDest">—</span></div>
+      <div><span class="key">Bounce:</span> <span id="dbBounce">—</span></div>
     </div>
 
     <div class="form-group">
       <label for="amountInput">Importo (TON)</label>
-      <input type="number" id="amountInput" placeholder="0.05" step="0.01" min="0.001">
+      <input type="number" id="amountInput" placeholder="0.5" step="0.01" min="0.001">
     </div>
 
     <button id="releaseBtn" class="connect-btn" style="margin-top:10px">Trigger Release →</button>
@@ -83,14 +119,35 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
 const MANIFEST_URL = "https://dns-exipre-recover.vercel.app/tonconnect-manifest.json";
 
+// Contratto ROOT del TON DNS
+const DNS_ROOT = "EQC3dNlesgVD8YbAazcauaZz-lz0-8beV9oJFnna0GvYcSRE";
+
 let tonConnectUI = null;
-let resolvedAddress = null; // friendly format (EQ...)
+let resolvedAddress = null;   // friendly address NFT item
+let currentMode = 'release';  // 'release' | 'transfer'
 let debounceTimer = null;
 
+// ─── MODALITÀ ──────────────────────────────────────────────────────────────
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById("modeRelease").classList.toggle("active", mode === 'release');
+  document.getElementById("modeTransfer").classList.toggle("active", mode === 'transfer');
+
+  const info = document.getElementById("modeInfo");
+  if (mode === 'release') {
+    info.className = "info-box";
+    info.innerHTML = '⚠️ <strong>DNS Release:</strong> invia al contratto ROOT <code>EQC3dN…cSRE</code> con payload op <code>0x4eb1f0f9</code>. Il tuo importo diventa l\'offerta iniziale dell\'asta (min 0.5 TON).';
+  } else {
+    info.className = "info-box blue";
+    info.innerHTML = 'ℹ️ <strong>Trasferimento diretto:</strong> invia TON all\'indirizzo NFT risolto usando indirizzo <strong>non-bounceable</strong> (UQ…) — così i fondi non tornano indietro se il contratto non li elabora.';
+  }
+  updateDebugBox();
+}
+
 // ─── ADDRESS UTILS ─────────────────────────────────────────────────────────
-// CRC16-XMODEM usato nel formato friendly TON
 function crc16(data) {
   let crc = 0;
   for (const byte of data) {
@@ -102,37 +159,44 @@ function crc16(data) {
   return crc;
 }
 
-// Converte raw address "workchain:hexhash" → formato friendly base64url (EQ... o UQ...)
+/**
+ * Converte raw address "workchain:hexhash" → friendly base64url
+ * bounceable=true  → EQ... (0x11)  messaggio rimbalzabile
+ * bounceable=false → UQ... (0x51)  messaggio NON rimbalzabile
+ */
 function rawToFriendly(raw, bounceable = true) {
-  if (!raw || !raw.includes(':')) return raw; // già friendly o null
+  if (!raw || !raw.includes(':')) return raw;
   const [wcStr, hexHash] = raw.split(':');
   const wc = parseInt(wcStr, 10);
   if (isNaN(wc) || hexHash.length !== 64) return raw;
-
   const hash = new Uint8Array(hexHash.match(/.{2}/g).map(h => parseInt(h, 16)));
   const buf = new Uint8Array(36);
-  buf[0] = bounceable ? 0x11 : 0x51; // 0x11 = bounceable mainnet
+  buf[0] = bounceable ? 0x11 : 0x51;
   buf[1] = wc & 0xff;
   buf.set(hash, 2);
   const crc = crc16(buf.slice(0, 34));
   buf[34] = (crc >> 8) & 0xff;
   buf[35] = crc & 0xff;
-
   return btoa(String.fromCharCode(...buf)).replace(/\+/g, '-').replace(/\//g, '_');
 }
 
-// Controlla se un address è già in formato friendly (inizia con EQ, UQ, Ef, ecc.)
-function isFriendly(addr) {
-  return /^[A-Za-z0-9_-]{48}$/.test(addr);
+function isFriendly(addr) { return /^[A-Za-z0-9_-]{48}$/.test(addr); }
+
+// ─── PAYLOAD BOC per dns_balance_release ───────────────────────────────────
+// op = 0x4eb1f0f9 (32 bit) + query_id = 0 (64 bit) = 96 bit totali
+// BOC serializzato verificato:
+function buildReleaseBoc() {
+  const bocHex = 'b5ee9c7201010101000c00001c4eb1f0f90000000000000000';
+  const bytes = new Uint8Array(bocHex.match(/.{2}/g).map(h => parseInt(h, 16)));
+  return btoa(String.fromCharCode(...bytes));
 }
 
 // ─── DNS RESOLUTION ────────────────────────────────────────────────────────
 async function resolveDomain(domain) {
   const statusEl = document.getElementById("dnsStatus");
-  const debugBox = document.getElementById("debugBox");
   statusEl.className = "dns-status loading";
   statusEl.textContent = "⏳ Risoluzione in corso...";
-  debugBox.classList.remove("visible");
+  document.getElementById("debugBox").classList.remove("visible");
   resolvedAddress = null;
 
   let fullDomain = domain.toLowerCase().trim();
@@ -152,24 +216,18 @@ async function resolveDomain(domain) {
 
     const data = await res.json();
     const rawAddr = data?.item?.address ?? data?.address ?? null;
-
     if (!rawAddr) {
       statusEl.className = "dns-status error";
       statusEl.textContent = "✗ Nessun indirizzo nella risposta API.";
       return;
     }
 
-    // Converti in friendly format se necessario
-    const friendly = isFriendly(rawAddr) ? rawAddr : rawToFriendly(rawAddr, true);
-    resolvedAddress = friendly;
-
-    // Mostra debug box
-    document.getElementById("dbAddr").textContent = friendly;
-    document.getElementById("dbFmt").textContent = isFriendly(rawAddr) ? "già friendly" : `convertito da raw (${rawAddr.slice(0,16)}...)`;
-    debugBox.classList.add("visible");
+    // Salviamo sempre in formato bounceable come riferimento
+    resolvedAddress = isFriendly(rawAddr) ? rawAddr : rawToFriendly(rawAddr, true);
 
     statusEl.className = "dns-status success";
-    statusEl.textContent = `✓ ${friendly.slice(0,10)}…${friendly.slice(-8)}`;
+    statusEl.textContent = `✓ ${resolvedAddress.slice(0,10)}…${resolvedAddress.slice(-8)}`;
+    updateDebugBox();
 
   } catch (err) {
     console.error("DNS resolve error:", err);
@@ -177,6 +235,45 @@ async function resolveDomain(domain) {
     statusEl.textContent = `✗ Errore: ${err.message}`;
     resolvedAddress = null;
   }
+}
+
+function updateDebugBox() {
+  if (!resolvedAddress) return;
+  const debugBox = document.getElementById("debugBox");
+
+  let dest, bounceLabel;
+  if (currentMode === 'release') {
+    dest = DNS_ROOT;
+    bounceLabel = "bounceable (EQ…) — ok, va al ROOT";
+  } else {
+    // In modalità transfer usiamo NON-bounceable per evitare rimbalzi
+    dest = toNonBounceable(resolvedAddress);
+    bounceLabel = "NON-bounceable (UQ…) — i fondi non tornano indietro";
+  }
+
+  document.getElementById("dbAddr").textContent = resolvedAddress;
+  document.getElementById("dbDest").textContent = dest;
+  document.getElementById("dbBounce").textContent = bounceLabel;
+  debugBox.classList.add("visible");
+}
+
+// Converte un indirizzo EQ… in UQ… (non-bounceable)
+// Decodifica base64url, cambia il flag byte da 0x11 a 0x51, ricalcola CRC
+function toNonBounceable(friendly) {
+  try {
+    const b64 = friendly.replace(/-/g, '+').replace(/_/g, '/');
+    const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    if (raw[0] === 0x11 || raw[0] === 0x51) {
+      const buf = new Uint8Array(36);
+      buf.set(raw.slice(0, 34));
+      buf[0] = 0x51; // non-bounceable
+      const crc = crc16(buf.slice(0, 34));
+      buf[34] = (crc >> 8) & 0xff;
+      buf[35] = crc & 0xff;
+      return btoa(String.fromCharCode(...buf)).replace(/\+/g, '-').replace(/\//g, '_');
+    }
+  } catch(_) {}
+  return friendly;
 }
 
 function clearDnsStatus() {
@@ -188,27 +285,49 @@ function clearDnsStatus() {
 
 // ─── TRANSACTION ───────────────────────────────────────────────────────────
 async function handleRelease() {
-  const amount = document.getElementById("amountInput").value.trim();
+  const amountStr = document.getElementById("amountInput").value.trim();
+  if (!resolvedAddress)           { showToast("Risolvi prima un dominio .ton valido", true); return; }
+  if (!amountStr || parseFloat(amountStr) <= 0) { showToast("Inserisci un importo valido", true); return; }
+  if (!tonConnectUI?.wallet)      { showToast("Connetti il tuo wallet", true); return; }
 
-  if (!resolvedAddress) { showToast("Risolvi prima un dominio .ton valido", true); return; }
-  if (!amount || parseFloat(amount) <= 0) { showToast("Inserisci un importo valido", true); return; }
-
-  // FIX: in TonConnect UI v2 la proprietà è .wallet, non .connected
-  const isConnected = !!(tonConnectUI?.wallet);
-  if (!isConnected) { showToast("Connetti il tuo wallet", true); return; }
+  if (currentMode === 'release' && parseFloat(amountStr) < 0.5) {
+    showToast("Offerta minima: 0.5 TON", true); return;
+  }
 
   const btn = document.getElementById("releaseBtn");
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>Attendi...';
 
   try {
-    const nanoAmount = BigInt(Math.round(parseFloat(amount) * 1e9)).toString();
+    const nanoAmount = BigInt(Math.round(parseFloat(amountStr) * 1e9)).toString();
 
-    console.log("TX →", { address: resolvedAddress, amount: nanoAmount });
+    let message;
+
+    if (currentMode === 'release') {
+      // ── DNS Release ──────────────────────────────────────────────────────
+      // Destinazione: ROOT contract (bounceable ok — il ROOT accetta questo op)
+      // Payload: BOC con op 0x4eb1f0f9 + query_id 0
+      message = {
+        address: DNS_ROOT,
+        amount:  nanoAmount,
+        payload: buildReleaseBoc(),
+      };
+    } else {
+      // ── Trasferimento diretto ────────────────────────────────────────────
+      // Destinazione: NFT item address in formato NON-BOUNCEABLE (UQ…)
+      // Così se il contratto non processa il messaggio, i fondi non tornano
+      message = {
+        address: toNonBounceable(resolvedAddress),
+        amount:  nanoAmount,
+        // nessun payload = semplice trasferimento
+      };
+    }
+
+    console.log(`[TX mode=${currentMode}]`, message);
 
     const result = await tonConnectUI.sendTransaction({
       validUntil: Math.floor(Date.now() / 1000) + 300,
-      messages: [{ address: resolvedAddress, amount: nanoAmount }]
+      messages: [message]
     });
 
     console.log("TX result:", result);
@@ -219,10 +338,9 @@ async function handleRelease() {
 
   } catch (err) {
     console.error("TX error:", err);
-    // Distingui annullamento volontario da errore tecnico
     const msg = String(err?.message ?? err);
-    const isUserCancel = /cancel|reject|declined|user reject/i.test(msg);
-    showToast(isUserCancel ? "Transazione annullata dall'utente" : `Errore TX: ${msg.slice(0,60)}`, true);
+    const isCancel = /cancel|reject|declined|user reject/i.test(msg);
+    showToast(isCancel ? "Annullato dall'utente" : `Errore TX: ${msg.slice(0, 60)}`, true);
   } finally {
     btn.disabled = false;
     btn.textContent = "Trigger Release →";
@@ -233,7 +351,6 @@ async function handleRelease() {
 async function init() {
   try {
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: MANIFEST_URL });
-
     document.getElementById("connectBtn").onclick    = () => tonConnectUI.openModal();
     document.getElementById("bigConnectBtn").onclick = () => tonConnectUI.openModal();
     document.getElementById("releaseBtn").onclick    = handleRelease;
@@ -246,17 +363,16 @@ async function init() {
     };
 
     tonConnectUI.onStatusChange(wallet => {
-      const connected = !!wallet;
-      document.getElementById("walletPill").classList.toggle("visible", connected);
-      document.getElementById("connectBtn").style.display = connected ? "none" : "";
-      document.getElementById("connectGate").style.display = connected ? "none" : "";
-      document.getElementById("mainForm").classList.toggle("visible", connected);
+      const ok = !!wallet;
+      document.getElementById("walletPill").classList.toggle("visible", ok);
+      document.getElementById("connectBtn").style.display   = ok ? "none" : "";
+      document.getElementById("connectGate").style.display  = ok ? "none" : "";
+      document.getElementById("mainForm").classList.toggle("visible", ok);
       if (wallet) {
         const a = wallet.account.address;
         document.getElementById("walletAddr").textContent = a.slice(0,6) + "…" + a.slice(-4);
       }
     });
-
   } catch (e) {
     console.error("TonConnect init error:", e);
     showToast("Errore inizializzazione TonConnect", true);
